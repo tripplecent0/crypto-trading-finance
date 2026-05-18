@@ -23,6 +23,15 @@
             </div>
 
             <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Chart Performance Trend</label>
+                <select id="controlChartTrend" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-300 focus:outline-none focus:border-emerald-500 font-medium">
+                    <option value="upward">Aggressive Growth (Rise)</option>
+                    <option value="downward">Market Correction (Fall)</option>
+                    <option value="stable">Consolidation (Stable Range)</option>
+                </select>
+            </div>
+
+            <div>
                 <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Display Payment Method</label>
                 <select id="controlCoinSelect" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-300 focus:outline-none focus:border-emerald-500 font-medium">
                     <option value="USDT (TRC20)">USDT (TRC20 Network)</option>
@@ -45,12 +54,17 @@
     <script>
     function saveControlDirectives() {
         const balanceVal = document.getElementById('controlBalanceInput').value;
+        const trendVal = document.getElementById('controlChartTrend').value;
         const selectedCoin = document.getElementById('controlCoinSelect').value;
         const addressVal = document.getElementById('controlAddressInput').value;
 
-        // Commit modifications to storage keys monitored by app.js
         if (balanceVal !== '') {
             localStorage.setItem('admin_balance', balanceVal);
+        }
+        
+        // Save the chosen trend state
+        if (trendVal) {
+            localStorage.setItem('chart_trend_directive', trendVal);
         }
         
         if (selectedCoin) {
