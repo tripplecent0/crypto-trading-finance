@@ -1,98 +1,83 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("Real-time trading simulation engine online.");
+    console.log("Real-time Live Trading Engine Active.");
 
-    // 1. Initial State Variables
-    let currentBalance = 600.00;
+    // 1. Initial baseline configuration
+    let targetBaseline = 600.00;
     try {
         const storedBalance = localStorage.getItem('admin_balance');
-        if (storedBalance) currentBalance = parseFloat(storedBalance);
+        if (storedBalance) targetBaseline = parseFloat(storedBalance);
     } catch (e) {
-        console.error("Storage access error:", e);
+        console.error(e);
     }
 
-    let previousBalance = currentBalance;
+    // Live working variables
+    let livePrice = targetBaseline;
+    let lastPrice = livePrice;
+    
+    // Hardcoded historical data array to mimic a continuous chart stream
+    let priceHistory = [
+        targetBaseline * 0.97, 
+        targetBaseline * 0.99, 
+        targetBaseline * 0.96, 
+        targetBaseline * 1.01, 
+        targetBaseline * 0.98, 
+        targetBaseline * 1.02, 
+        livePrice
+    ];
 
-    function updateDisplayElements() {
+    // UI Ticker Updater
+    function updateLiveTicker() {
         const balanceDisplay = document.getElementById('balance-display');
-        const trendIndicator = document.getElementById('trend-indicator'); // Optional element for percentage text
-
         if (balanceDisplay) {
-            balanceDisplay.innerText = '$' + currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
-
-        if (trendIndicator) {
-            const difference = currentBalance - previousBalance;
-            if (difference >= 0) {
-                trendIndicator.innerText = `+${((difference / (previousBalance || 1)) * 100).toFixed(2)}% Today`;
-                trendIndicator.style.color = '#10b981'; // Green text
-            } else {
-                trendIndicator.innerText = `${((difference / (previousBalance || 1)) * 100).toFixed(2)}% Today`;
-                trendIndicator.style.color = '#ef4444'; // Red text
-            }
+            balanceDisplay.innerText = '$' + livePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
     }
-    updateDisplayElements();
+    updateLiveTicker();
 
-    // 2. Active Technical Chart Controller
+    // 2. ChartJS Real-Time Renderer
     let tradingChart = null;
     const ctx = document.getElementById('LivePerformanceChart');
 
-    function buildTradingChart() {
+    function renderTradingChart(isBullish) {
         if (!ctx || typeof Chart === 'undefined') return;
-
-        const activeTrend = localStorage.getItem('chart_trend_directive') || 'stable';
-        
-        // Generate continuous sequence data reflecting structural market trends
-        let dataPoints = [];
-        let seedValue = currentBalance;
-        
-        // Construct 7 history segments backtracking from current balance
-        for (let i = 0; i < 7; i++) {
-            let variance = (Math.random() - 0.48) * (seedValue * 0.015); // Normal distribution noise
-            if (activeTrend === 'upward') variance += (seedValue * 0.005);
-            if (activeTrend === 'downward') variance -= (seedValue * 0.005);
-            
-            dataPoints.unshift(seedValue);
-            seedValue -= variance;
-        }
 
         if (tradingChart) {
             tradingChart.destroy();
         }
 
         const chartContext = ctx.getContext('2d');
-
-        // Dynamically alter the core line asset aesthetics depending on net movement
-        const currentTrendDirection = dataPoints[dataPoints.length - 1] - dataPoints[0];
-        const marketThemeColor = currentTrendDirection >= 0 ? '#10b981' : '#ef4444'; // Green if up, Red if down
-
-        const gradientArea = chartContext.createLinearGradient(0, 0, 0, ctx.canvas.clientHeight || 250);
-        if (currentTrendDirection >= 0) {
-            gradientArea.addColorStop(0, 'rgba(16, 185, 129, 0.20)');
-            gradientArea.addColorStop(1, 'rgba(16, 185, 129, 0.00)');
+        const glowGradient = chartContext.createLinearGradient(0, 0, 0, ctx.canvas.clientHeight || 250);
+        
+        // Define exact color tokens based on price trend direction
+        let candleThemeColor = '#10b981'; // Green
+        if (!isBullish) {
+            candleThemeColor = '#ef4444'; // Red
+            glowGradient.addColorStop(0, 'rgba(239, 68, 68, 0.25)');
+            glowGradient.addColorStop(1, 'rgba(239, 68, 68, 0.00)');
         } else {
-            gradientArea.addColorStop(0, 'rgba(239, 68, 68, 0.20)');
-            gradientArea.addColorStop(1, 'rgba(239, 68, 68, 0.00)');
+            glowGradient.addColorStop(0, 'rgba(16, 185, 129, 0.25)');
+            glowGradient.addColorStop(1, 'rgba(16, 185, 129, 0.00)');
         }
 
         tradingChart = new Chart(chartContext, {
             type: 'line',
             data: {
-                labels: ['02:00 PM', '04:00 PM', '06:00 PM', '08:00 PM', '10:00 PM', '12:00 AM', '02:00 AM'],
+                labels: ['02:00 PM', '04:00 PM', '06:00 PM', '08:00 PM', '10:00 PM', '12:00 AM', 'Live Feed'],
                 datasets: [{
-                    data: dataPoints,
-                    borderColor: marketThemeColor,
+                    data: priceHistory,
+                    borderColor: candleThemeColor,
                     borderWidth: 2.5,
-                    pointBackgroundColor: marketThemeColor,
+                    pointBackgroundColor: candleThemeColor,
                     pointRadius: 2,
-                    tension: 0.35,
+                    tension: 0.4,
                     fill: true,
-                    backgroundColor: gradientArea
+                    backgroundColor: glowGradient
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: { duration: 300 }, // Fast transition updates like a real exchange feed
                 plugins: { legend: { display: false } },
                 scales: {
                     x: {
@@ -112,43 +97,64 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    buildTradingChart();
+    // Initial render setup
+    renderTradingChart(true);
 
-    // 3. Automated Constant Micro-Fluctuation Loop (Ticks every 3 seconds)
+    // 3. Live Order Book Fluctuation Loop (Ticks fast every 1.5 seconds)
     setInterval(() => {
-        const selectedTrend = localStorage.getItem('chart_trend_directive') || 'stable';
+        const directiveTrend = localStorage.getItem('chart_trend_directive') || 'stable';
         
-        // Save old point value reference before recalculation
-        previousBalance = currentBalance;
+        // Store current position before updating the live price
+        lastPrice = livePrice;
 
-        // Ticks numbers slightly up or down to keep layout elements moving dynamically
-        let priceChange = (Math.random() - 0.5) * 1.20; // Natural market flutter
-        
-        if (selectedTrend === 'upward') {
-            priceChange += 0.45; // Weight towards positive gain
-        } else if (selectedTrend === 'downward') {
-            priceChange -= 0.55; // Weight towards correction decline
+        // Calculate a micro price movement value
+        let priceMovement = (Math.random() - 0.5) * (targetBaseline * 0.008); // Normal market fluctuation noise
+
+        // Weight price direction based on controller trend selection
+        if (directiveTrend === 'upward') {
+            priceMovement += (targetBaseline * 0.002); // Upward push
+        } else if (directiveTrend === 'downward') {
+            priceMovement -= (targetBaseline * 0.002); // Downward pressure
         }
 
-        currentBalance += priceChange;
-        if (currentBalance < 0) currentBalance = 0;
+        livePrice += priceMovement;
 
-        updateDisplayElements();
-        buildTradingChart();
-    }, 3000);
+        // Prevent values from dipping below zero
+        if (livePrice < 0) livePrice = 0;
 
-    // 4. Remote Event Listeners for External Changes
+        // Is the current price higher or lower than the previous step?
+        const isBullish = livePrice >= lastPrice;
+
+        // Update the last coordinate element in our chart history tracking array
+        priceHistory[priceHistory.length - 1] = livePrice;
+
+        // Push values onto the UI elements
+        updateLiveTicker();
+        renderTradingChart(isBullish);
+    }, 1500);
+
+    // 4. Remote Control Override Event Synchronization Link
     window.addEventListener('storage', (event) => {
         if (!event.newValue) return;
 
         if (event.key === 'admin_balance') {
-            currentBalance = parseFloat(event.newValue) || 0.00;
-            previousBalance = currentBalance;
-            updateDisplayElements();
-            buildTradingChart();
-        }
-        if (event.key === 'chart_trend_directive') {
-            buildTradingChart();
+            targetBaseline = parseFloat(event.newValue) || 600.00;
+            livePrice = targetBaseline;
+            lastPrice = livePrice;
+            
+            // Re-seed history based on the newly submitted balance target
+            priceHistory = [
+                targetBaseline * 0.97, 
+                targetBaseline * 0.99, 
+                targetBaseline * 0.96, 
+                targetBaseline * 1.01, 
+                targetBaseline * 0.98, 
+                targetBaseline * 1.02, 
+                livePrice
+            ];
+            
+            updateLiveTicker();
+            renderTradingChart(true);
         }
     });
 });
