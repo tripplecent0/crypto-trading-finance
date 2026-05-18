@@ -1,109 +1,93 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("Dynamic data engine initialized.");
+    console.log("Real-time trading simulation engine online.");
 
-    // 1. Core State Tracking Variables
-    let currentBalance = 1000.00;
+    // 1. Initial State Variables
+    let currentBalance = 600.00;
     try {
         const storedBalance = localStorage.getItem('admin_balance');
         if (storedBalance) currentBalance = parseFloat(storedBalance);
     } catch (e) {
-        console.error("Storage error:", e);
+        console.error("Storage access error:", e);
     }
-    
-    let walletAddresses = {
-        'USDT (TRC20)': localStorage.getItem('admin_address') || "0x71C2496E7278274d3b4614a420971a9E3a9411bb",
-        'Bitcoin (BTC Mainnet)': localStorage.getItem('btc_address') || "1BitcoinAddressHere",
-        'Ethereum (ETH ERC20)': localStorage.getItem('eth_address') || "0xEthAddressHere"
-    };
 
-    // 2. Continuous Number Renderer
-    function updateBalanceDisplay() {
-        const display = document.getElementById('balance-display');
-        if (display) {
-            display.innerText = '$' + currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    let previousBalance = currentBalance;
+
+    function updateDisplayElements() {
+        const balanceDisplay = document.getElementById('balance-display');
+        const trendIndicator = document.getElementById('trend-indicator'); // Optional element for percentage text
+
+        if (balanceDisplay) {
+            balanceDisplay.innerText = '$' + currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        if (trendIndicator) {
+            const difference = currentBalance - previousBalance;
+            if (difference >= 0) {
+                trendIndicator.innerText = `+${((difference / (previousBalance || 1)) * 100).toFixed(2)}% Today`;
+                trendIndicator.style.color = '#10b981'; // Green text
+            } else {
+                trendIndicator.innerText = `${((difference / (previousBalance || 1)) * 100).toFixed(2)}% Today`;
+                trendIndicator.style.color = '#ef4444'; // Red text
+            }
         }
     }
-    updateBalanceDisplay();
+    updateDisplayElements();
 
-    // 3. Dynamic Vector Array Calculator
-    let chartInstance = null;
+    // 2. Active Technical Chart Controller
+    let tradingChart = null;
     const ctx = document.getElementById('LivePerformanceChart');
 
-    function generateDynamicPoints(trend, baseValue) {
-        const reference = baseValue > 0 ? baseValue : 600;
-        // Seed predictable nodes based on the target balance
-        let point1 = reference * 0.95;
-        let point2 = reference * 0.98;
-        let point3 = reference * 0.96;
-        let point4 = reference * 1.01;
-        let point5 = reference * 0.99;
-        let point6 = reference * 1.03;
-        let point7 = reference;
+    function buildTradingChart() {
+        if (!ctx || typeof Chart === 'undefined') return;
 
-        // Apply shift weights based on chosen control trend
-        if (trend === 'upward') {
-            point4 += (reference * 0.04);
-            point5 += (reference * 0.03);
-            point6 += (reference * 0.06);
-            point7 += (reference * 0.05);
-        } else if (trend === 'downward') {
-            point4 -= (reference * 0.05);
-            point5 -= (reference * 0.07);
-            point6 -= (reference * 0.09);
-            point7 -= (reference * 0.12);
+        const activeTrend = localStorage.getItem('chart_trend_directive') || 'stable';
+        
+        // Generate continuous sequence data reflecting structural market trends
+        let dataPoints = [];
+        let seedValue = currentBalance;
+        
+        // Construct 7 history segments backtracking from current balance
+        for (let i = 0; i < 7; i++) {
+            let variance = (Math.random() - 0.48) * (seedValue * 0.015); // Normal distribution noise
+            if (activeTrend === 'upward') variance += (seedValue * 0.005);
+            if (activeTrend === 'downward') variance -= (seedValue * 0.005);
+            
+            dataPoints.unshift(seedValue);
+            seedValue -= variance;
         }
 
-        // Add micro-noise so lines are never perfectly flat
-        const noise = (amplitude) => (Math.random() - 0.5) * (reference * amplitude);
-        return [
-            point1 + noise(0.01),
-            point2 + noise(0.01),
-            point3 + noise(0.015),
-            point4 + noise(0.015),
-            point5 + noise(0.02),
-            point6 + noise(0.02),
-            point7 + noise(0.005)
-        ];
-    }
-
-    // 4. Chart Rendering Execution
-    function renderEngine() {
-        if (!ctx || typeof Chart === 'undefined') return;
-        
-        const activeTrend = localStorage.getItem('chart_trend_directive') || 'stable';
-        const updatedDataset = generateDynamicPoints(activeTrend, currentBalance);
-
-        if (chartInstance) {
-            chartInstance.destroy();
+        if (tradingChart) {
+            tradingChart.destroy();
         }
 
         const chartContext = ctx.getContext('2d');
-        const fillGradient = chartContext.createLinearGradient(0, 0, 0, ctx.canvas.clientHeight || 250);
-        
-        // Define theme aesthetics based on current trajectory vector
-        let UIThemeColor = '#10b981'; // Emerald Green
-        if (activeTrend === 'downward') {
-            UIThemeColor = '#ef4444'; // Crimson Red
-            fillGradient.addColorStop(0, 'rgba(239, 68, 68, 0.22)');
-            fillGradient.addColorStop(1, 'rgba(239, 68, 68, 0.00)');
+
+        // Dynamically alter the core line asset aesthetics depending on net movement
+        const currentTrendDirection = dataPoints[dataPoints.length - 1] - dataPoints[0];
+        const marketThemeColor = currentTrendDirection >= 0 ? '#10b981' : '#ef4444'; // Green if up, Red if down
+
+        const gradientArea = chartContext.createLinearGradient(0, 0, 0, ctx.canvas.clientHeight || 250);
+        if (currentTrendDirection >= 0) {
+            gradientArea.addColorStop(0, 'rgba(16, 185, 129, 0.20)');
+            gradientArea.addColorStop(1, 'rgba(16, 185, 129, 0.00)');
         } else {
-            fillGradient.addColorStop(0, 'rgba(16, 185, 129, 0.22)');
-            fillGradient.addColorStop(1, 'rgba(16, 185, 129, 0.00)');
+            gradientArea.addColorStop(0, 'rgba(239, 68, 68, 0.20)');
+            gradientArea.addColorStop(1, 'rgba(239, 68, 68, 0.00)');
         }
 
-        chartInstance = new Chart(chartContext, {
+        tradingChart = new Chart(chartContext, {
             type: 'line',
             data: {
                 labels: ['02:00 PM', '04:00 PM', '06:00 PM', '08:00 PM', '10:00 PM', '12:00 AM', '02:00 AM'],
                 datasets: [{
-                    data: updatedDataset,
-                    borderColor: UIThemeColor,
+                    data: dataPoints,
+                    borderColor: marketThemeColor,
                     borderWidth: 2.5,
-                    pointBackgroundColor: UIThemeColor,
-                    pointRadius: 1.5,
-                    tension: 0.38,
+                    pointBackgroundColor: marketThemeColor,
+                    pointRadius: 2,
+                    tension: 0.35,
                     fill: true,
-                    backgroundColor: fillGradient
+                    backgroundColor: gradientArea
                 }]
             },
             options: {
@@ -120,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ticks: { 
                             color: '#64748b', 
                             font: { size: 10 },
-                            callback: function(v) { return '$' + v.toFixed(2); }
+                            callback: function(val) { return '$' + val.toFixed(2); }
                         }
                     }
                 }
@@ -128,47 +112,43 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Initial load execution
-    renderEngine();
+    buildTradingChart();
 
-    // 5. Background Loop Engine (Runs every 3.5 seconds)
+    // 3. Automated Constant Micro-Fluctuation Loop (Ticks every 3 seconds)
     setInterval(() => {
-        const currentTrend = localStorage.getItem('chart_trend_directive') || 'stable';
+        const selectedTrend = localStorage.getItem('chart_trend_directive') || 'stable';
         
-        // Simulates changing numbers on screen based on the trend vector
-        if (currentTrend === 'upward') {
-            currentBalance += (Math.random() * 1.45);
-        } else if (currentTrend === 'downward') {
-            currentBalance -= (Math.random() * 1.65);
-        } else {
-            // Fluctuate up and down slightly to simulate normal live noise
-            currentBalance += (Math.random() - 0.5) * 0.85;
+        // Save old point value reference before recalculation
+        previousBalance = currentBalance;
+
+        // Ticks numbers slightly up or down to keep layout elements moving dynamically
+        let priceChange = (Math.random() - 0.5) * 1.20; // Natural market flutter
+        
+        if (selectedTrend === 'upward') {
+            priceChange += 0.45; // Weight towards positive gain
+        } else if (selectedTrend === 'downward') {
+            priceChange -= 0.55; // Weight towards correction decline
         }
 
-        // Apply boundaries so numbers stay realistic
+        currentBalance += priceChange;
         if (currentBalance < 0) currentBalance = 0;
 
-        // Push updates onto layout views
-        updateBalanceDisplay();
-        renderEngine();
-    }, 3500);
+        updateDisplayElements();
+        buildTradingChart();
+    }, 3000);
 
-    // 6. External Cross-Tab Command Event Interceptor
+    // 4. Remote Event Listeners for External Changes
     window.addEventListener('storage', (event) => {
         if (!event.newValue) return;
 
         if (event.key === 'admin_balance') {
             currentBalance = parseFloat(event.newValue) || 0.00;
-            updateBalanceDisplay();
-            renderEngine();
+            previousBalance = currentBalance;
+            updateDisplayElements();
+            buildTradingChart();
         }
         if (event.key === 'chart_trend_directive') {
-            renderEngine();
-        }
-        if (event.key === 'forced_network') {
-            if (typeof window.switchCryptoNetwork === 'function') {
-                window.switchCryptoNetwork(event.newValue);
-            }
+            buildTradingChart();
         }
     });
 });
