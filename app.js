@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("Binance-style ticker engine online.");
+    console.log("Trading Engine Stabilized Mode Active.");
 
-    // 1. Set the initial control baseline
+    // 1. Initial baseline configuration
     let baselineBalance = 600.00;
     try {
         const stored = localStorage.getItem('admin_balance');
@@ -22,8 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const balanceTxt = document.getElementById('balance-display');
         if (balanceTxt) {
             balanceTxt.innerText = '$' + currentLivePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            
-            // Flash the balance text color briefly to simulate an active market feed
             balanceTxt.style.color = isUpTick ? '#10b981' : '#ef4444'; 
         }
     }
@@ -43,18 +41,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const ctxRef = chartCanvas.getContext('2d');
         const glowArea = ctxRef.createLinearGradient(0, 0, 0, chartCanvas.clientHeight || 220);
         
-        // Define trade signals: standard green for upward ticks, standard red for downward ticks
-        let strokeColor = '#10b981'; // Bullish Green
+        let strokeColor = '#10b981'; // Green
         if (!isUpTick) {
-            strokeColor = '#ef4444'; // Bearish Red
-            glowArea.addColorStop(0, 'rgba(239, 68, 68, 0.20)');
+            strokeColor = '#ef4444'; // Red
+            glowArea.addColorStop(0, 'rgba(239, 68, 68, 0.15)');
             glowArea.addColorStop(1, 'rgba(239, 68, 68, 0.00)');
         } else {
-            glowArea.addColorStop(0, 'rgba(16, 185, 129, 0.20)');
+            glowArea.addColorStop(0, 'rgba(16, 185, 129, 0.15)');
             glowArea.addColorStop(1, 'rgba(16, 185, 129, 0.00)');
         }
 
-        // Generate clean placeholders along the bottom timeline axis
         const timelineLabels = chartDataPoints.map((_, i) => `T-${10 - i}`);
 
         cryptoChartInstance = new Chart(ctxRef, {
@@ -65,8 +61,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     data: [...chartDataPoints],
                     borderColor: strokeColor,
                     borderWidth: 2.5,
-                    pointRadius: 0, // Smooth line without bulky circle points
-                    tension: 0.3,   // Natural market wave curve styling
+                    pointRadius: 0, 
+                    tension: 0.35,   
                     fill: true,
                     backgroundColor: glowArea
                 }]
@@ -74,12 +70,12 @@ document.addEventListener('DOMContentLoaded', () => {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                animation: { duration: 200 }, // Snappy transitions for rapid tick updates
+                animation: { duration: 600 }, // Smooth transition speed
                 plugins: { legend: { display: false } },
                 scales: {
-                    x: { display: false }, // Hides clutter on small grid scales
+                    x: { display: false }, 
                     y: {
-                        grid: { color: 'rgba(51, 65, 85, 0.10)', drawBorder: false },
+                        grid: { color: 'rgba(51, 65, 85, 0.08)', drawBorder: false },
                         ticks: { 
                             color: '#64748b', 
                             font: { size: 10 },
@@ -91,41 +87,56 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Initial setup render
     drawCryptoChart(true);
 
-    // 3. Automated Order Book Simulation Loop (Runs fast every 2 seconds)
+    // 3. Automated Flow Loop - Slowed down to 6000ms (6 seconds) for normal positioning
     setInterval(() => {
         const trendControl = localStorage.getItem('chart_trend_directive') || 'stable';
         
         lastTickPrice = currentLivePrice;
+        let marketShift = (Math.random() - 0.5) * 1.10;
 
-        // Generate a random market fluctuation fraction
-        let marketShift = (Math.random() - 0.5) * 1.50;
-
-        // Adjust trend direction based on your choice in control.html
         if (trendControl === 'upward') {
-            marketShift += 0.40; // Lean heavily toward gains
+            marketShift += 0.35; 
         } else if (trendControl === 'downward') {
-            marketShift -= 0.45; // Lean heavily toward drops
+            marketShift -= 0.40; 
         }
 
         currentLivePrice += marketShift;
         if (currentLivePrice < 0) currentLivePrice = 0;
 
-        // Check if the asset price went up or down compared to the last tick
         const priceWentUp = currentLivePrice >= lastTickPrice;
 
-        // Append the new tick to our rolling dataset and drop the oldest data point
         chartDataPoints.push(currentLivePrice);
         chartDataPoints.shift();
 
-        // Push updates live to your screen layout elements
         refreshUIElements(priceWentUp);
         drawCryptoChart(priceWentUp);
-    }, 2000);
+    }, 6000);
 
-    // 4. Remote Event Listener for Setting Updates via the Controller
+    // 4. Re-linking Button Actions for Deposit and Withdrawal
+    const depositBtn = document.querySelector('button, .bg-emerald-500'); 
+    const withdrawBtn = document.querySelectorAll('button')[1]; 
+
+    // Open deposit panel view
+    if (depositBtn && depositBtn.innerText.includes('Deposit')) {
+        depositBtn.addEventListener('click', () => {
+            const modal = document.getElementById('deposit-modal') || document.querySelector('.modal-deposit');
+            if (modal) modal.style.display = 'flex';
+            else alert('Redirecting to secure deposit address node...');
+        });
+    }
+
+    // Open withdrawal request form
+    if (withdrawBtn && withdrawBtn.innerText.includes('Withdraw')) {
+        withdrawBtn.addEventListener('click', () => {
+            const modal = document.getElementById('withdraw-modal') || document.querySelector('.modal-withdraw');
+            if (modal) modal.style.display = 'flex';
+            else alert('Withdrawal gateway verification handling initiated.');
+        });
+    }
+
+    // 5. Remote Sync Updates via Control Panel
     window.addEventListener('storage', (event) => {
         if (!event.newValue) return;
 
