@@ -13,20 +13,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
     updateBalanceDisplay();
 
-    const chartElement = document.getElementById('LivePerformanceChart');
-    if (!chartElement) {
-        console.error("Chart element 'LivePerformanceChart' not found in HTML layout.");
-        return;
+    // --- ENHANCED MODAL CONTROLLERS ---
+    // These functions change the style element to make your overlay screens visible
+    window.triggerDepositModal = function() {
+        // Looks for common modal element IDs or class layouts
+        const depositModal = document.getElementById('depositModal') || 
+                             document.getElementById('deposit-modal') || 
+                             document.querySelector('.deposit-modal');
+        if (depositModal) {
+            depositModal.style.display = 'flex';
+            depositModal.style.visibility = 'visible';
+        } else {
+            alert(`Deposit Address (${paymentMethod}):\n${depositAddress}`);
+        }
     }
+
+    window.triggerWithdrawalModal = function() {
+        const withdrawModal = document.getElementById('withdrawModal') || 
+                              document.getElementById('withdraw-modal') || 
+                              document.querySelector('.withdraw-modal');
+        if (withdrawModal) {
+            withdrawModal.style.display = 'flex';
+            withdrawModal.style.visibility = 'visible';
+        } else {
+            alert("Account Verification Required\nTo withdraw funds, please complete identity verification.");
+        }
+    }
+
+    // --- CHART INITIALIZATION ---
+    const chartElement = document.getElementById('LivePerformanceChart');
+    if (!chartElement) return;
     const ctx = chartElement.getContext('2d');
 
-    // Standard color constants for the trading chart
     const greenColor = 'rgba(16, 185, 129, 1)';
     const greenGradientStart = 'rgba(16, 185, 129, 0.24)';
     const redColor = 'rgba(239, 68, 68, 1)';
     const redGradientStart = 'rgba(239, 68, 68, 0.24)';
 
-    // Helper to generate a fresh gradient based on the current market direction
     function getChartGradient(colorStart) {
         let gradient = ctx.createLinearGradient(0, 0, 0, 300);
         gradient.addColorStop(0, colorStart);
@@ -62,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Real-time market simulation interval loop
+    // --- INTERACTION LOOP ---
     setInterval(() => {
         const controlledBalance = parseFloat(localStorage.getItem('admin_balance'));
         const pctChange = (Math.random() * 0.3 - 0.15) / 100;
@@ -75,7 +98,6 @@ document.addEventListener('DOMContentLoaded', () => {
             currentBalance = currentBalance * (1 + pctChange);
         }
 
-        // Update chart points dynamically relative to the current balance bracket
         liveChart.data.datasets[0].data = [
             currentBalance * 0.992, 
             currentBalance * 0.995, 
@@ -87,7 +109,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         updateBalanceDisplay();
 
-        // Dynamic color shifting logic based on performance direction
         if (currentBalance >= previousBalance) {
             liveChart.data.datasets[0].borderColor = greenColor;
             liveChart.data.datasets[0].backgroundColor = getChartGradient(greenGradientStart);
