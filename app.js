@@ -55,11 +55,6 @@ const liveChart = new Chart(ctx, {
         plugins: { legend: { display: false } }
     }
 });
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } }
-    }
-});
 
 // Real-time market simulation interval loop
 setInterval(() => {
