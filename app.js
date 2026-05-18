@@ -30,9 +30,10 @@ function getChartGradient(colorStart) {
 
 const liveChart = new Chart(ctx, {
     type: 'line',
-   datasets: [{
+    data: {
+        labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+        datasets: [{
             label: 'Portfolio Value (USDT)',
-            // This creates a realistic path leading right up to your current balance
             data: [
                 currentBalance * 0.992, 
                 currentBalance * 0.995, 
@@ -46,9 +47,14 @@ const liveChart = new Chart(ctx, {
             fill: true,
             backgroundColor: getChartGradient(greenGradientStart),
             tension: 0.4
-        }] 
+        }]
     },
     options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } }
+    }
+});
         responsive: true,
         maintainAspectRatio: false,
         plugins: { legend: { display: false } }
