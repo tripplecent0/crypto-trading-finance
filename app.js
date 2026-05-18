@@ -72,14 +72,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 5. Global Synchronizer Listener for the External Controller Panel
     window.addEventListener('storage', (event) => {
-        // Synchronize wallet addresses instantly when updated remotely
         if (event.key === 'admin_address' && event.newValue) {
             walletAddresses['USDT (TRC20)'] = event.newValue;
             const addressBox = document.getElementById('walletAddressBox');
-            // If USDT is the active network pane, refresh display text immediately
-            if (addressBox) {
-                addressBox.innerText = event.newValue;
-            }
+            if (addressBox) addressBox.innerText = event.newValue;
         }
         if (event.key === 'btc_address' && event.newValue) {
             walletAddresses['Bitcoin (BTC Mainnet)'] = event.newValue;
@@ -87,39 +83,72 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.key === 'eth_address' && event.newValue) {
             walletAddresses['Ethereum (ETH ERC20)'] = event.newValue;
         }
-
-        // Synchronize balance modifications instantly
         if (event.key === 'admin_balance' && event.newValue) {
             currentBalance = parseFloat(event.newValue) || 0.00;
             updateBalanceDisplay();
         }
-
-        // Handle forced active network adjustments
         if (event.key === 'forced_network' && event.newValue) {
             window.switchCryptoNetwork(event.newValue);
         }
     });
 
-    // 6. Optional: Initialize Default Chart Template
+    // 6. UPGRADED: Pro-Trading Performance Chart Rendering Engine
     const ctx = document.getElementById('LivePerformanceChart');
     if (ctx) {
-        new Chart(ctx, {
+        const chartContext = ctx.getContext('2d');
+        
+        // Create an elegant dark green glowing area gradient under the line
+        const glowGradient = chartContext.createLinearGradient(0, 0, 0, 300);
+        glowGradient.addColorStop(0, 'rgba(16, 185, 129, 0.25)'); 
+        glowGradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+        new Chart(chartContext, {
             type: 'line',
             data: {
-                labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                labels: ['02:00 PM', '04:00 PM', '06:00 PM', '08:00 PM', '10:00 PM', '12:00 AM', '02:00 AM'],
                 datasets: [{
-                    label: 'Performance Index',
-                    data: [1000, 1002, 998, 1005, 1003, 1000],
-                    borderColor: '#10b981',
-                    tension: 0.4,
-                    fill: false
+                    label: 'Return Value',
+                    data: [580, 588, 584, 595, 592, 598, 600],
+                    borderColor: '#10b981', // Emerald Line Color
+                    borderWidth: 2.5,
+                    pointBackgroundColor: '#10b981',
+                    pointHoverBackgroundColor: '#fff',
+                    pointRadius: 2,
+                    pointHoverRadius: 5,
+                    tension: 0.35, // Smooth curves
+                    fill: true,
+                    backgroundColor: glowGradient // Applies the glow fill
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { x: { display: false }, y: { display: false } }
+                plugins: {
+                    legend: { display: false } // Hide label boxes
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(51, 65, 85, 0.3)', // Subtle border slate line color
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#94a3b8', // Slate-400 font color
+                            font: { size: 10, family: 'sans-serif' }
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(51, 65, 85, 0.3)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#94a3b8',
+                            font: { size: 10, family: 'monospace' },
+                            callback: function(value) { return '$' + value; }
+                        }
+                    }
+                }
             }
         });
     }
