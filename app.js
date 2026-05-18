@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("Dashboard tracking matrix online.");
+    console.log("Dashboard live feed engine active.");
 
     let currentBalance = 1000.00;
     try {
@@ -23,29 +23,53 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     updateBalanceDisplay();
 
-    // Chart logic setup
     let trendChartInstance = null;
     const ctx = document.getElementById('LivePerformanceChart');
 
-    function generateDataPoints(trend, baseValue) {
+    // Generates points with subtle random variations around the target baseline
+    function generateLivePoints(trend, baseValue) {
         const factor = baseValue > 0 ? baseValue : 600;
+        const randomShift = () => (Math.random() - 0.5) * (factor * 0.02); // 2% fluctuation range
+
         if (trend === 'upward') {
-            // Rises over time
-            return [factor * 0.92, factor * 0.94, factor * 0.93, factor * 0.97, factor * 0.96, factor * 0.99, factor];
+            return [
+                factor * 0.90 + randomShift(),
+                factor * 0.93 + randomShift(),
+                factor * 0.91 + randomShift(),
+                factor * 0.96 + randomShift(),
+                factor * 0.94 + randomShift(),
+                factor * 0.98 + randomShift(),
+                factor
+            ];
         } else if (trend === 'downward') {
-            // Falls over time
-            return [factor * 1.08, factor * 1.05, factor * 1.06, factor * 1.02, factor * 1.03, factor * 0.98, factor * 0.91];
+            return [
+                factor * 1.10 + randomShift(),
+                factor * 1.06 + randomShift(),
+                factor * 1.08 + randomShift(),
+                factor * 1.02 + randomShift(),
+                factor * 1.04 + randomShift(),
+                factor * 0.97 + randomShift(),
+                factor * 0.90
+            ];
         } else {
-            // Fluctuate tightly in a stable line around baseValue
-            return [factor * 0.99, factor * 1.01, factor * 0.98, factor * 1.02, factor * 0.99, factor * 1.01, factor];
+            // Stable consolidation mode bounces tightly around baseline
+            return [
+                factor * 0.98 + randomShift(),
+                factor * 1.01 + randomShift(),
+                factor * 0.99 + randomShift(),
+                factor * 1.02 + randomShift(),
+                factor * 0.98 + randomShift(),
+                factor * 1.01 + randomShift(),
+                factor + randomShift()
+            ];
         }
     }
 
     function buildLiveChart() {
         if (!ctx || typeof Chart === 'undefined') return;
         
-        const activeTrend = localStorage.getItem('chart_trend_directive') || 'upward';
-        const rawDataset = generateDataPoints(activeTrend, currentBalance);
+        const activeTrend = localStorage.getItem('chart_trend_directive') || 'stable';
+        const rawDataset = generateLivePoints(activeTrend, currentBalance);
 
         if (trendChartInstance) {
             trendChartInstance.destroy();
@@ -54,12 +78,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const chartContext = ctx.getContext('2d');
         const glowGradient = chartContext.createLinearGradient(0, 0, 0, 300);
         
-        // Adjust chart colors based on positive rise or negative drop trends
+        // Dynamic coloring: red color scheme for downward trends, green for upward/stable
+        let lineThemeColor = '#10b981';
         if (activeTrend === 'downward') {
-            glowGradient.addColorStop(0, 'rgba(239, 68, 68, 0.2)'); // Red glow
+            lineThemeColor = '#ef4444';
+            glowGradient.addColorStop(0, 'rgba(239, 68, 68, 0.25)');
             glowGradient.addColorStop(1, 'rgba(239, 68, 68, 0.0)');
         } else {
-            glowGradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)'); // Green glow
+            glowGradient.addColorStop(0, 'rgba(16, 185, 129, 0.25)');
             glowGradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
         }
 
@@ -68,13 +94,13 @@ document.addEventListener('DOMContentLoaded', () => {
             data: {
                 labels: ['02:00 PM', '04:00 PM', '06:00 PM', '08:00 PM', '10:00 PM', '12:00 AM', '02:00 AM'],
                 datasets: [{
-                    label: 'Index Value',
+                    label: 'Market Index',
                     data: rawDataset,
-                    borderColor: activeTrend === 'downward' ? '#ef4444' : '#10b981',
+                    borderColor: lineThemeColor,
                     borderWidth: 2.5,
-                    pointBackgroundColor: activeTrend === 'downward' ? '#ef4444' : '#10b981',
-                    pointRadius: 2,
-                    tension: 0.35,
+                    pointBackgroundColor: lineThemeColor,
+                    pointRadius: 3,
+                    tension: 0.4,
                     fill: true,
                     backgroundColor: glowGradient
                 }]
@@ -85,15 +111,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 plugins: { legend: { display: false } },
                 scales: {
                     x: {
-                        grid: { color: 'rgba(51, 65, 85, 0.2)', drawBorder: false },
+                        grid: { color: 'rgba(51, 65, 85, 0.15)', drawBorder: false },
                         ticks: { color: '#94a3b8', font: { size: 10 } }
                     },
                     y: {
-                        grid: { color: 'rgba(51, 65, 85, 0.2)', drawBorder: false },
+                        grid: { color: 'rgba(51, 65, 85, 0.15)', drawBorder: false },
                         ticks: { 
                             color: '#94a3b8', 
                             font: { size: 10 },
-                            callback: function(val) { return '$' + val.toFixed(0); }
+                            callback: function(val) { return '$' + val.toFixed(2); }
                         }
                     }
                 }
@@ -101,20 +127,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Initialize chart display
+    // Initial render
     buildLiveChart();
 
-    // Storage updates observer
+    // Auto-update feed cycle: redraws minor changes every 4 seconds to animate movement
+    setInterval(() => {
+        buildLiveChart();
+    }, 4000);
+
+    // Synchronizer listener for real-time remote commands
     window.addEventListener('storage', (event) => {
         if (!event.newValue) return;
 
         if (event.key === 'admin_balance') {
             currentBalance = parseFloat(event.newValue) || 0.00;
             updateBalanceDisplay();
-            buildLiveChart(); // Re-render relative values
+            buildLiveChart();
         }
         if (event.key === 'chart_trend_directive') {
-            buildLiveChart(); // Trigger dynamic data rebuild instantly
+            buildLiveChart();
         }
         if (event.key === 'forced_network') {
             if (typeof window.switchCryptoNetwork === 'function') {
