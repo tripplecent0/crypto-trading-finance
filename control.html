@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Operator Command System</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center font-sans antialiased p-4">
+<body class="bg-[#0b0f19] text-slate-100 min-h-screen flex items-center justify-center font-sans p-4">
 
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl w-full max-w-md space-y-5">
+    <div class="bg-[#111827] border border-slate-800 rounded-2xl p-6 shadow-2xl w-full max-w-md space-y-5">
         <div>
-            <h2 class="text-xl font-bold tracking-tight text-white uppercase text-emerald-400">Operator Control Interface</h2>
-            <p class="text-xs text-slate-400 mt-1">Real-time macro engine overrides for simulation workflows.</p>
+            <h2 class="text-xl font-bold tracking-tight text-emerald-400 uppercase">Operator Control Interface</h2>
+            <p class="text-xs text-slate-400 mt-1">Real-time simulation configuration override utility.</p>
         </div>
 
         <hr class="border-slate-800">
@@ -19,21 +19,21 @@
         <div class="space-y-4">
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Target Account Balance ($)</label>
-                <input type="number" id="controlBalanceInput" value="600" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono">
+                <input type="number" id="controlBalanceInput" value="600" class="w-full bg-[#1f2937] border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono">
             </div>
 
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Chart Performance Trend</label>
-                <select id="controlChartTrend" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-300 focus:outline-none focus:border-emerald-500 font-medium">
+                <select id="controlChartTrend" class="w-full bg-[#1f2937] border border-slate-700 rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-emerald-500 font-medium">
+                    <option value="stable">Consolidation (Stable Range)</option>
                     <option value="upward">Aggressive Growth (Rise)</option>
                     <option value="downward">Market Correction (Fall)</option>
-                    <option value="stable">Consolidation (Stable Range)</option>
                 </select>
             </div>
 
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Display Payment Method</label>
-                <select id="controlCoinSelect" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-300 focus:outline-none focus:border-emerald-500 font-medium">
+                <select id="controlCoinSelect" class="w-full bg-[#1f2937] border border-slate-700 rounded-xl px-4 py-2.5 text-slate-200 focus:outline-none focus:border-emerald-500 font-medium">
                     <option value="USDT (TRC20)">USDT (TRC20 Network)</option>
                     <option value="Bitcoin (BTC Mainnet)">Bitcoin (BTC Mainnet)</option>
                     <option value="Ethereum (ETH ERC20)">Ethereum (ETH ERC20)</option>
@@ -42,11 +42,11 @@
 
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Receiving Destination Address</label>
-                <input type="text" id="controlAddressInput" placeholder="Enter target crypto wallet address" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono text-xs">
+                <input type="text" id="controlAddressInput" placeholder="Enter crypto destination wallet" class="w-full bg-[#1f2937] border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono text-xs">
             </div>
         </div>
 
-        <button onclick="saveControlDirectives()" class="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl transition-all duration-200 shadow-lg shadow-emerald-500/10 cursor-pointer text-sm tracking-wide mt-2">
+        <button onclick="saveControlDirectives()" class="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl transition-all duration-200 shadow-lg shadow-emerald-500/10 cursor-pointer text-sm tracking-wide">
             Apply Changes
         </button>
     </div>
@@ -62,7 +62,6 @@
             localStorage.setItem('admin_balance', balanceVal);
         }
         
-        // Save the chosen trend state
         if (trendVal) {
             localStorage.setItem('chart_trend_directive', trendVal);
         }
