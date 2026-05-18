@@ -1,38 +1,75 @@
-<input type="number" id="controlBalanceInput" placeholder="600">
-<select id="controlCoinSelect">
-    <option value="USDT (TRC20)">USDT (TRC20 Network)</option>
-    <option value="Bitcoin (BTC Mainnet)">Bitcoin (BTC Mainnet)</option>
-    <option value="Ethereum (ETH ERC20)">Ethereum (ETH ERC20)</option>
-</select>
-<input type="text" id="controlAddressInput" placeholder="Receiving Address">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Operator Command System</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center font-sans antialiased p-4">
 
-<button onclick="saveControlDirectives()">Apply Changes</button>
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl w-full max-w-md space-y-5">
+        <div>
+            <h2 class="text-xl font-bold tracking-tight text-white uppercase text-emerald-400">Operator Control Interface</h2>
+            <p class="text-xs text-slate-400 mt-1">Real-time macro engine overrides for simulation workflows.</p>
+        </div>
 
-<script>
-function saveControlDirectives() {
-    // Read current values from the input fields
-    const newBalance = document.getElementById('controlBalanceInput').value;
-    const selectedCoin = document.getElementById('controlCoinSelect').value;
-    const newAddress = document.getElementById('controlAddressInput').value;
+        <hr class="border-slate-800">
 
-    // Write to localStorage keys that app.js is actively listening for
-    if (newBalance) {
-        localStorage.setItem('admin_balance', newBalance);
-    }
-    if (selectedCoin) {
-        localStorage.setItem('forced_network', selectedCoin);
-    }
-    if (newAddress) {
-        // Update the specific storage key mapped to the active network address
-        if (selectedCoin === 'USDT (TRC20)') {
-            localStorage.setItem('admin_address', newAddress);
-        } else if (selectedCoin === 'Bitcoin (BTC Mainnet)') {
-            localStorage.setItem('btc_address', newAddress);
-        } else if (selectedCoin === 'Ethereum (ETH ERC20)') {
-            localStorage.setItem('eth_address', newAddress);
+        <div class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Target Account Balance ($)</label>
+                <input type="number" id="controlBalanceInput" value="600" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Display Payment Method</label>
+                <select id="controlCoinSelect" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-300 focus:outline-none focus:border-emerald-500 font-medium">
+                    <option value="USDT (TRC20)">USDT (TRC20 Network)</option>
+                    <option value="Bitcoin (BTC Mainnet)">Bitcoin (BTC Mainnet)</option>
+                    <option value="Ethereum (ETH ERC20)">Ethereum (ETH ERC20)</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Receiving Destination Address</label>
+                <input type="text" id="controlAddressInput" placeholder="Enter target crypto wallet address" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 font-mono text-xs">
+            </div>
+        </div>
+
+        <button onclick="saveControlDirectives()" class="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl transition-all duration-200 shadow-lg shadow-emerald-500/10 cursor-pointer text-sm tracking-wide mt-2">
+            Apply Changes
+        </button>
+    </div>
+
+    <script>
+    function saveControlDirectives() {
+        const balanceVal = document.getElementById('controlBalanceInput').value;
+        const selectedCoin = document.getElementById('controlCoinSelect').value;
+        const addressVal = document.getElementById('controlAddressInput').value;
+
+        // Commit modifications to storage keys monitored by app.js
+        if (balanceVal !== '') {
+            localStorage.setItem('admin_balance', balanceVal);
         }
-    }
+        
+        if (selectedCoin) {
+            localStorage.setItem('forced_network', selectedCoin);
+        }
 
-    alert('Directives committed to local storage.');
-}
-</script>
+        if (addressVal.trim() !== '') {
+            if (selectedCoin === 'USDT (TRC20)') {
+                localStorage.setItem('admin_address', addressVal);
+            } else if (selectedCoin === 'Bitcoin (BTC Mainnet)') {
+                localStorage.setItem('btc_address', addressVal);
+            } else if (selectedCoin === 'Ethereum (ETH ERC20)') {
+                localStorage.setItem('eth_address', addressVal);
+            }
+        }
+
+        alert('Directives successfully dispatched to local storage engine.');
+    }
+    </script>
+
+</body>
+</html>
