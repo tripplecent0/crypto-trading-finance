@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Management Terminal</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-6 font-sans">
+
+    <div class="max-w-5xl mx-auto">
+        <header class="mb-8 border-b border-slate-800 pb-5">
+            <h1 class="text-3xl font-extrabold tracking-tight text-white">System Controller</h1>
+            <p class="text-slate-400 text-sm mt-1">Manage remote system variables and metrics securely.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <div class="lg:col-span-2 bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl">
+                <h2 class="text-lg font-bold mb-4 text-emerald-400 flex items-center gap-2">
+                    Account Ledger Override
+                </h2>
+                
+                <form id="admin-ledger-form" class="space-y-5">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Target User Identifier (Email or ID)</label>
+                        <input type="text" id="user-id" required placeholder="user@example.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Account Balance (USDT)</label>
+                            <input type="number" id="user-balance" required placeholder="0.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Profit/Loss Adjustment ($)</label>
+                            <input type="number" id="user-profit" placeholder="0.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Deposit/Withdrawal Status</label>
+                        <select id="user-status" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition">
+                            <option value="none">No Pending Transactions</option>
+                            <option value="pending_deposit">Deposit Awaiting Verification</option>
+                            <option value="approved">Transaction Completed</option>
+                            <option value="declined">Transaction Declined</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-4 rounded-xl transition duration-200 shadow-lg shadow-emerald-950/20 cursor-pointer">
+                        Broadcast to Target Account
+                    </button>
+                </form>
+            </div>
+
+            <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl space-y-6">
+                <div>
+                    <h2 class="text-lg font-bold mb-4 text-blue-400">System Monitoring</h2>
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                        <div class="text-xs text-slate-500 font-semibold uppercase tracking-wider">Database Status</div>
+                        <div id="connection-status" class="text-sm font-bold text-amber-500 mt-1">Disconnected (Local Run)</div>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-800 pt-4">
+                    <h3 class="text-sm font-bold text-white mb-3">Live Feed Configuration</h3>
+                    <div class="space-y-3">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" id="freeze-charts" class="rounded border-slate-800 bg-slate-950 text-blue-500 focus:ring-0">
+                            <span class="text-sm text-slate-300">Stabilize market trend curves</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Placeholder handling for initial form interface validation
+        document.getElementById('admin-ledger-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const target = document.getElementById('user-id').value;
+            const balance = document.getElementById('user-balance').value;
+            const status = document.getElementById('user-status').value;
+            
+            console.log(`Interface capture: Target ${target} updated locally.`);
+            alert(`Interface check complete.\nTarget: ${target}\nBalance Input: $${balance} USDT\nStatus Selected: ${status}\n\nNext step: Connecting the database configuration keys.`);
+        });
+    </script>
+</body>
+</html>
