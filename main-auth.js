@@ -4,7 +4,7 @@ import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10
 
 // 1. Direct configuration keys
 const firebaseConfig = {
-  apiKey: "AIzaSyBkbchDPs4f0i2GaFprXr3C-XGooim0uVA",
+  apiKey: "AIzaSyBkbchDPs4fOi2GaFprXr3C-XGOoiw0uVA",
   authDomain: "apex-trade-assist.firebaseapp.com",
   databaseURL: "https://apex-trade-assist-default-rtdb.firebaseio.com",
   projectId: "apex-trade-assist",
